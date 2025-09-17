@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-native",
+    "strict": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@roast-me/ui": ["../../packages/ui/src"],
+      "@roast-me/database": ["../../packages/database/src"],
+      "@roast-me/types": ["../../packages/types/src"],
+      "@roast-me/ai": ["../../packages/ai/src"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
+}

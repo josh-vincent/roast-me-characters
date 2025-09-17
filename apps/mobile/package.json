@@ -1,0 +1,40 @@
+{
+  "name": "mobile",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "lint": "eslint .",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "expo": "~52.0.11",
+    "expo-status-bar": "~2.0.1",
+    "react": "19.0.0",
+    "react-native": "0.77.1",
+    "react-native-web": "~0.20.0",
+    "expo-router": "~4.0.11",
+    "expo-linking": "~7.0.4",
+    "expo-constants": "~17.0.5",
+    "expo-image-picker": "~16.1.2",
+    "expo-gl": "~15.0.2",
+    "expo-gl-cpp": "~11.4.0",
+    "expo-three": "^8.0.0",
+    "three": "^0.172.0",
+    "@supabase/supabase-js": "^2.47.10",
+    "react-native-url-polyfill": "^2.0.0",
+    "@react-native-async-storage/async-storage": "2.1.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.26.0",
+    "@types/react": "~19.0.2",
+    "@types/react-native": "~0.73.0",
+    "typescript": "~5.7.2",
+    "eslint": "^9.17.0",
+    "eslint-config-expo": "~8.0.1"
+  },
+  "private": true
+}
