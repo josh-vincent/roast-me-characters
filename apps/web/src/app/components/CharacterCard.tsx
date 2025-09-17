@@ -65,7 +65,7 @@ export function CharacterCard({ character }: CharacterCardProps) {
               </div>
             </div>
           ) : character.model_url ? (
-            // Completed with image - use thumbnail for gallery cards, fallback to model_url
+            // Completed with image - show generated image as main, original as overlay
             <div className="relative w-full h-full">
               <ImageWithBanner
                 src={character.thumbnail_url || character.model_url}
@@ -139,7 +139,7 @@ export function CharacterCard({ character }: CharacterCardProps) {
         {/* Character Info */}
         <div className="p-4">
           <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-purple-600 transition-colors">
-            {character.generation_params?.roast_content?.title || character.og_title || 'AI Generated Character'}
+            {character.generation_params?.roast_content?.title || character.og_title || `Roast Character`}
           </h3>
           
           {/* Roast Content Preview */}
@@ -203,7 +203,8 @@ export function CharacterCard({ character }: CharacterCardProps) {
               {new Date(character.created_at).toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: '2-digit',
-                day: '2-digit'
+                day: '2-digit',
+                timeZone: 'UTC'
               })}
             </span>
           </div>

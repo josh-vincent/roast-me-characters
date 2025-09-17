@@ -3,17 +3,31 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ImageUploadWithUrl } from '@roast-me/ui';
-import { generateDirectly } from '../actions/generate-direct';
+import { generateWithAuth } from '../actions/generate-with-auth';
+import { useAuth } from '@/contexts/AuthContext';
+import { SignupPrompt } from '@/components/SignupPrompt';
 
 type WorkflowStep = 'upload' | 'generate';
 
 export function CharacterUploadSection() {
   const router = useRouter();
+  const { userProfile, refreshUserProfile } = useAuth();
   const [currentStep, setCurrentStep] = useState<WorkflowStep>('upload');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSignupPrompt, setShowSignupPrompt] = useState(false);
   
   const handleUpload = async (source: File | string) => {
+    // Check credits before starting
+    if (userProfile && userProfile.plan === 'free' && userProfile.credits <= 0) {
+      if (userProfile.is_anonymous && userProfile.images_created >= 3) {
+        setShowSignupPrompt(true);
+      } else {
+        setError('No credits remaining. Purchase more credits to continue.');
+      }
+      return;
+    }
+
     setCurrentStep('generate');
     setIsProcessing(true);
     setError(null);
@@ -27,12 +41,28 @@ export function CharacterUploadSection() {
         formData.append('imageUrl', source);
       }
       
-      const result = await generateDirectly(formData);
+      const result = await generateWithAuth(formData);
       
       if ('error' in result && result.error) {
-        setError(result.error);
+        if (result.needsCredits) {
+          if (result.isAnonymous && result.imagesCreated >= 3) {
+            setShowSignupPrompt(true);
+          } else {
+            setError('No credits remaining. Purchase more credits to continue.');
+          }
+        } else {
+          setError(result.error);
+        }
         setCurrentStep('upload');
       } else if (result.success && result.seoSlug) {
+        // Refresh user profile to update credits
+        await refreshUserProfile();
+        
+        // Show signup prompt if needed
+        if (result.showSignupPrompt) {
+          setShowSignupPrompt(true);
+        }
+        
         // Redirect to character page immediately
         router.push(`/character/${encodeURIComponent(result.seoSlug)}`);
         return;
@@ -56,15 +86,34 @@ export function CharacterUploadSection() {
           <div className="bg-gradient-to-br from-purple-50 via-white to-blue-50 rounded-3xl border border-gray-200 overflow-hidden">
             <div className="p-12">
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4">
-                  <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
+                
+                
+                {/* Credits Display - Always visible */}
+                <div className="inline-flex items-center bg-white rounded-full px-4 py-2 shadow-sm border border-gray-200 mb-4">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
+                      <span className="text-purple-600 font-bold text-xs">🔥</span>
+                    </div>
+                    <span className="text-gray-700 text-sm font-medium">
+                      {userProfile?.plan === 'free' ? (
+                        <>Credits: <span className="text-purple-600 font-bold">{userProfile?.credits || 0}</span></>
+                      ) : userProfile?.plan ? (
+                        <span className="text-purple-600 font-bold">Unlimited</span>
+                      ) : (
+                        <>Credits: <span className="text-purple-600 font-bold">Loading...</span></>
+                      )}
+                    </span>
+                    {/* Always show "Get more" button for free users */}
+                    {(!userProfile?.plan || userProfile?.plan === 'free') && (
+                      <a 
+                        href="/credits" 
+                        className="text-xs text-purple-600 hover:text-purple-700 font-medium ml-2 bg-purple-50 hover:bg-purple-100 px-2 py-1 rounded-full transition-colors"
+                      >
+                        Get more
+                      </a>
+                    )}
+                  </div>
                 </div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-3">Start creating</h2>
-                <p className="text-lg text-gray-600 max-w-md mx-auto">
-                  Upload a photo to get hilariously roasted with a caricature figurine featuring your most exaggerated traits!
-                </p>
               </div>
               
               <ImageUploadWithUrl onUpload={handleUpload} isLoading={isProcessing} />
@@ -148,6 +197,18 @@ export function CharacterUploadSection() {
           </div>
         </div>
       ) : null}
+      
+      {/* Signup Prompt Modal */}
+      {showSignupPrompt && (
+        <SignupPrompt 
+          onClose={() => setShowSignupPrompt(false)}
+          onSignup={() => {
+            setShowSignupPrompt(false);
+            // Refresh user profile after signup
+            refreshUserProfile();
+          }}
+        />
+      )}
     </div>
   );
 }

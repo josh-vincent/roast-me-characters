@@ -250,7 +250,7 @@ export function ImageUploadWithUrl({
                     className="group relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200 hover:border-purple-400 transition-all duration-200"
                   >
                     <img 
-                      src="https://images.unsplash.com/photo-1530785602389-07594beb8b73?w=400" 
+                      src="https://m.media-amazon.com/images/M/MV5BZjA3NzZiZDktZjc2My00MzY2LThhOWMtZGFjYzg4ZDI2ZWVmXkEyXkFqcGc@._V1_FMjpg_UX1080_.jpg" 
                       alt="Johnny Depp style" 
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                     />

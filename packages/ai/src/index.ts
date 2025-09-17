@@ -62,6 +62,7 @@ export async function analyzeImageFeatures(imageUrl: string): Promise<FeatureAna
             - DO NOT add glasses if they're not wearing glasses
             - DO NOT add accessories that aren't there
             - DO NOT invent features that don't exist
+            - DO NOT mention roasting or the word ROAST.
             - Focus on what makes THIS SPECIFIC PERSON unique and roastable
             
             Identify 3-5 most roast-worthy visual elements that ACTUALLY EXIST:
@@ -151,12 +152,13 @@ export async function generateRoast(
       messages: [
         {
           role: 'system',
-          content: `You are a professional roast comedian creating playful, humorous roasts for a caricature figurine generator.
+          content: `You are a professional roast comedian creating playful, accurate,brutal honest and humorous roasts for a caricature figurine generator.
 
-Your goal is to create a FUNNY, PLAYFUL roast that makes people laugh - never mean or offensive. This is like a comedy roast where everyone has fun.
+Your goal is to create a FUNNY, PLAYFUL roast that makes people laugh - This is like a comedy roast where everyone has fun. Be brutal and honest.
 
 ROAST STYLE:
-- Playful and humorous, never cruel or hurtful
+- Playful and humorous
+- Brutal and honest
 - Focus on the exaggerated features in a funny way
 - Think comedy club roast or friendly banter between friends
 - Make it quotable and shareable
@@ -168,16 +170,16 @@ STRUCTURE:
 - Punchline: A witty one-liner to finish strong
 - Figurine Name: A funny collectible name (like "Big Mike" or "Specs McGee")
 
-Remember: This should make the person LAUGH, not feel bad. It's all in good fun!`,
+Remember: This should make the person LAUGH, It's all in good fun!`,
         },
         {
           role: 'user',
-          content: `Create a playful roast for a ${analysis.gender} ${analysis.age_range} person with these exaggerated features: ${featureDescriptions}. 
+          content: `Create a roast for a ${analysis.gender} ${analysis.age_range} person with these exaggerated features: ${featureDescriptions}. 
           
           Personality traits: ${analysis.personality_traits.join(', ')}
           Character style: ${analysis.character_style}
           
-          Make it funny and quotable while being respectful and fun!`,
+          Make it funny and quotable while being brutally honest and fun!`,
         },
       ],
     });
@@ -235,6 +237,8 @@ export function generateCharacterPrompt(features: Pick<AIFeature, 'feature_name'
   - Two-dimensional flat illustrations of THIS SPECIFIC PERSON on packaging
   - Professional toy company branding aesthetic
   
+  - DO NOT mention roasting or the word ROAST anywhere in the image or the prompt.
+
   Overall Quality: Museum-quality collectible figure photography with professional lighting and composition representing the actual person.`;
 }
 
@@ -439,6 +443,7 @@ export async function generateCharacterImage(
     ${userRoastFeatures.length > 0 ? `- EXTRA DRAMATIC emphasis on user-selected features: ${userRoastFeatures.map(f => f.name).join(', ')}` : ''}
     
     PACKAGING DESIGN:
+    - DO NOT mention roasting or the word ROAST anywhere in the image or the prompt.
     - Premium collectible figure packaging visible in scene
     - Original character artwork printed on the box showing the EXAGGERATED caricature of THIS PERSON
     - Two-dimensional flat illustrations of THIS SPECIFIC PERSON with exaggerated features
@@ -453,7 +458,8 @@ export async function generateCharacterImage(
     - Sharp focus on figurine with subtle depth of field
     - Realistic desk environment with proper shadows and reflections
     - High-resolution detail showing the exaggerated figurine craftsmanship
-    - Clean, professional composition that showcases the humorous caricature elements`;
+    - Clean, professional composition that showcases the humorous caricature elements
+    - DO NOT mention roasting or the word ROAST anywhere in the image or the prompt.`;
 
   // Try AI SDK first
   console.log('🔄 Step 1: Trying AI SDK approach...');

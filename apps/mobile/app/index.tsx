@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 export default function HomeScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Roast Me Characters</Text>
+      <Text style={styles.title}>Roast Me </Text>
       <Text style={styles.subtitle}>
         Upload an image and watch AI transform it into an exaggerated 3D character
       </Text>

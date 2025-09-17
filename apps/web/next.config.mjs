@@ -5,6 +5,7 @@ const nextConfig = {
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    unoptimized: false,
     remotePatterns: [
       {
         protocol: 'https',
@@ -29,8 +30,17 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: '*.redd.it'
+      },
+      {
+        protocol: 'https',
+        hostname: '*.media-amazon.com'
+      },
+      {
+        protocol: 'https',
+        hostname: '*.tocld.com'
       }
     ],
+    minimumCacheTTL: 60,
   },
   experimental: {
     serverActions: {

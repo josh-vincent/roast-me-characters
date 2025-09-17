@@ -175,6 +175,35 @@ export interface Database {
           created_at?: string
         }
       }
+      roast_me_ai_waitlist: {
+        Row: {
+          id: string
+          email: string
+          created_at: string
+          updated_at: string
+          source: 'web' | 'mobile' | 'social'
+          is_notified: boolean
+          notification_sent_at: string | null
+        }
+        Insert: {
+          id?: string
+          email: string
+          created_at?: string
+          updated_at?: string
+          source?: 'web' | 'mobile' | 'social'
+          is_notified?: boolean
+          notification_sent_at?: string | null
+        }
+        Update: {
+          id?: string
+          email?: string
+          created_at?: string
+          updated_at?: string
+          source?: 'web' | 'mobile' | 'social'
+          is_notified?: boolean
+          notification_sent_at?: string | null
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -211,3 +240,7 @@ export type Character3DUpdate = Database['public']['Tables']['roast_me_ai_charac
 export type CharacterShare = Database['public']['Tables']['roast_me_ai_shares']['Row']
 export type CharacterShareInsert = Database['public']['Tables']['roast_me_ai_shares']['Insert']
 export type CharacterShareUpdate = Database['public']['Tables']['roast_me_ai_shares']['Update']
+
+export type WaitlistEntry = Database['public']['Tables']['roast_me_ai_waitlist']['Row']
+export type WaitlistEntryInsert = Database['public']['Tables']['roast_me_ai_waitlist']['Insert']
+export type WaitlistEntryUpdate = Database['public']['Tables']['roast_me_ai_waitlist']['Update']

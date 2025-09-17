@@ -309,10 +309,7 @@ export async function getCharacterBySlug(slug: string): Promise<any | null> {
   
   const { data, error } = await supabase
     .from('roast_me_ai_characters')
-    .select(`
-      *,
-      image:roast_me_ai_image_uploads (*)
-    `)
+    .select('*')
     .eq('seo_slug', slug)
     .eq('is_public', true)
     .maybeSingle(); // Use maybeSingle to handle 0 rows gracefully
@@ -327,9 +324,28 @@ export async function getCharacterBySlug(slug: string): Promise<any | null> {
     return null;
   }
   
+  // Get image data separately if image_id exists
+  let image = null;
+  if ((data as any).image_id) {
+    try {
+      const { data: imageData, error: imageError } = await supabase
+        .from('roast_me_ai_image_uploads')
+        .select('*')
+        .eq('id', (data as any).image_id)
+        .single();
+      
+      if (!imageError && imageData) {
+        image = imageData;
+      }
+    } catch (imageErr) {
+      console.error('Error fetching image for character:', (data as any).id, imageErr);
+    }
+  }
+  
   // Transform JSON features back to the expected format
   return {
     ...(data as any),
+    image: image,
     features: (data as any).ai_features_json?.features || []
   };
 }
@@ -342,10 +358,7 @@ export async function getCharacterById(id: string): Promise<any | null> {
   
   const { data, error } = await supabase
     .from('roast_me_ai_characters')
-    .select(`
-      *,
-      image:roast_me_ai_image_uploads (*)
-    `)
+    .select('*')
     .eq('id', id)
     .maybeSingle(); // Use maybeSingle to handle 0 rows gracefully
   
@@ -359,18 +372,80 @@ export async function getCharacterById(id: string): Promise<any | null> {
     return null;
   }
   
+  // Get image data separately if image_id exists
+  let image = null;
+  if ((data as any).image_id) {
+    try {
+      const { data: imageData, error: imageError } = await supabase
+        .from('roast_me_ai_image_uploads')
+        .select('*')
+        .eq('id', (data as any).image_id)
+        .single();
+      
+      if (!imageError && imageData) {
+        image = imageData;
+      }
+    } catch (imageErr) {
+      console.error('Error fetching image for character:', (data as any).id, imageErr);
+    }
+  }
+  
   // Transform JSON features back to the expected format
   return {
     ...(data as any),
+    image: image,
     features: (data as any).ai_features_json?.features || []
   };
 }
 
 export async function incrementViewCount(characterId: string): Promise<boolean> {
   try {
-    // Use RPC to handle increment atomically - temporary disable until we can create the function
-    // For now just silently succeed to avoid blocking the app
+    if (!supabase) {
+      console.error('Supabase client not initialized');
+      return false;
+    }
+
     console.log('Incrementing view count for character:', characterId);
+
+    // Use raw SQL to increment the view count atomically
+    const { data, error } = await (supabase as any).rpc('increment_view_count', {
+      character_id: characterId
+    });
+
+    if (error) {
+      // If RPC doesn't exist, fallback to manual increment
+      console.log('RPC not available, using fallback increment method');
+      
+      // First get current view count
+      const { data: currentData, error: selectError } = await supabase
+        .from('roast_me_ai_characters')
+        .select('view_count')
+        .eq('id', characterId)
+        .single();
+
+      if (selectError) {
+        console.error('Error getting current view count:', selectError);
+        return false;
+      }
+
+      const currentViewCount = (currentData as any)?.view_count || 0;
+      
+      // Update with incremented value
+      const { error: updateError } = await (supabase as any)
+        .from('roast_me_ai_characters')
+        .update({ view_count: currentViewCount + 1 })
+        .eq('id', characterId);
+
+      if (updateError) {
+        console.error('Error updating view count:', updateError);
+        return false;
+      }
+
+      console.log(`View count incremented from ${currentViewCount} to ${currentViewCount + 1}`);
+      return true;
+    }
+
+    console.log('View count incremented successfully via RPC');
     return true;
   } catch (error) {
     console.error('Unexpected error in incrementViewCount:', error);
