@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { X, Download, Share2, ZoomIn, ZoomOut } from 'lucide-react';
+import { ImageWithBanner } from './ImageWithBanner';
 
 interface FullScreenImageModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface FullScreenImageModalProps {
   title?: string;
   onDownload?: () => void;
   onShare?: () => void;
+  showBanner?: boolean;
 }
 
 export function FullScreenImageModal({
@@ -21,7 +23,8 @@ export function FullScreenImageModal({
   imageAlt,
   title,
   onDownload,
-  onShare
+  onShare,
+  showBanner = true
 }: FullScreenImageModalProps) {
   const [isZoomed, setIsZoomed] = useState(false);
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
@@ -191,24 +194,40 @@ export function FullScreenImageModal({
             </div>
           )}
           
-          <Image
-            src={imageSrc}
-            alt={imageAlt}
-            width={800}
-            height={800}
-            className={`max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-opacity duration-300 ${
-              imageLoaded ? 'opacity-100' : 'opacity-0'
-            }`}
-            onLoad={() => setImageLoaded(true)}
-            priority
-            sizes="100vw"
-            style={{
-              maxWidth: '100%',
-              maxHeight: '100%',
-              width: 'auto',
-              height: 'auto'
-            }}
-          />
+          {showBanner ? (
+            <div className="relative" style={{ width: '800px', height: '800px', maxWidth: '100%', maxHeight: '100%' }}>
+              <ImageWithBanner
+                src={imageSrc}
+                alt={imageAlt}
+                fill
+                className={`rounded-lg shadow-2xl transition-opacity duration-300 ${
+                  imageLoaded ? 'opacity-100' : 'opacity-0'
+                }`}
+                showBanner={true}
+                priority
+                sizes="100vw"
+              />
+            </div>
+          ) : (
+            <Image
+              src={imageSrc}
+              alt={imageAlt}
+              width={800}
+              height={800}
+              className={`max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-opacity duration-300 ${
+                imageLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
+              onLoad={() => setImageLoaded(true)}
+              priority
+              sizes="100vw"
+              style={{
+                maxWidth: '100%',
+                maxHeight: '100%',
+                width: 'auto',
+                height: 'auto'
+              }}
+            />
+          )}
         </div>
       </div>
 

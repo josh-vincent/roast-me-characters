@@ -657,6 +657,7 @@ export default function CharacterPageClient({ slug, initialCharacter, initialErr
             ? `${character.generation_params.roast_content.title} - ${character.generation_params.roast_content.roast_text}`
             : character.generation_params?.og_image_alt || 'Hilarious roast caricature figurine'}
           title={character.generation_params?.roast_content?.title || character.og_title}
+          showBanner={true}
           onDownload={() => character.model_url && downloadImageWithBanner(
             character.model_url,
             character.generation_params?.roast_content?.figurine_name 

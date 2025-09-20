@@ -251,6 +251,7 @@ export function CharacterCard({ character, showPrivacyBadge = false }: Character
             ? `${character.generation_params.roast_content.title} - ${character.generation_params.roast_content.punchline}`
             : character.og_title || 'Generated character'}
           title={character.generation_params?.roast_content?.title || character.og_title}
+          showBanner={true}
         />
       )}
     </>
