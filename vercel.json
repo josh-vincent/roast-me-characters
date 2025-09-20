@@ -7,10 +7,6 @@
       "maxDuration": 10
     }
   },
-  "images": {
-    "domains": ["xpndmfhitpkbzhinfprf.supabase.co"],
-    "minimumCacheTTL": 604800
-  },
   "headers": [
     {
       "source": "/api/og",
