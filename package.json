@@ -18,10 +18,12 @@
     "mobile": "pnpm --filter mobile dev"
   },
   "devDependencies": {
-    "turbo": "^2.5.0",
+    "@types/node": "^22.10.2",
+    "dotenv": "^17.2.2",
     "prettier": "^3.4.2",
-    "typescript": "^5.7.2",
-    "@types/node": "^22.10.2"
+    "tsx": "^4.20.5",
+    "turbo": "^2.5.0",
+    "typescript": "^5.7.2"
   },
   "workspaces": [
     "apps/*",
