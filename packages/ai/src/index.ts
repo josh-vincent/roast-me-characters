@@ -5,8 +5,13 @@ import { z } from 'zod';
 import type { AIFeature } from '@roast-me/types';
 
 // Configure Google Generative AI for Gemini
+const googleApiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+if (!googleApiKey) {
+  console.warn('⚠️ GOOGLE_GENERATIVE_AI_API_KEY is not set. Image analysis and generation will fail.');
+}
+
 const google = createGoogleGenerativeAI({
-  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || '',
+  apiKey: googleApiKey || '',
 });
 
 // Configure AI Gateway - can route to multiple providers including Grok
@@ -51,6 +56,10 @@ export type RoastContent = z.infer<typeof RoastSchema>;
 
 export async function analyzeImageFeatures(imageUrl: string): Promise<FeatureAnalysis> {
   try {
+    if (!googleApiKey) {
+      throw new Error('GOOGLE_GENERATIVE_AI_API_KEY is not set. Cannot analyze image features.');
+    }
+    
     const result = await generateObject({
       model: google('gemini-1.5-pro') as any, // Using Gemini 1.5 Pro for structured analysis (better for JSON objects)
       schema: FeatureAnalysisSchema,
@@ -157,15 +166,15 @@ export async function generateRoast(
       .join(', ');
 
     // Determine which provider to use based on available API keys
+    // Note: Grok-beta (v1) is not compatible with AI SDK v5, so we use Gemini as primary
     let model;
-    if (process.env.AI_GATEWAY_URL && process.env.AI_GATEWAY_API_KEY) {
-      // Use AI Gateway if configured (can route to Grok or other providers)
-      model = aiGateway('grok-beta'); // Request Grok through the gateway
-    } else if (process.env.XAI_API_KEY) {
-      // Direct Grok access if XAI API key is available
-      model = grok('grok-beta');
-    } else if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-      // Fallback to Gemini if no Grok access
+    if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+      // Use Gemini 1.5 Flash for roast generation (fast and creative)
+      model = google('gemini-1.5-flash');
+    } else if (process.env.AI_GATEWAY_URL && process.env.AI_GATEWAY_API_KEY) {
+      // Fallback to AI Gateway if configured 
+      // Note: grok-beta is v1 and incompatible with AI SDK v5
+      console.warn('AI Gateway configured but using Gemini for compatibility');
       model = google('gemini-1.5-flash');
     } else {
       throw new Error('No AI provider configured. Please set AI_GATEWAY_API_KEY, XAI_API_KEY, or GOOGLE_GENERATIVE_AI_API_KEY');
