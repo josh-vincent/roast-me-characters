@@ -114,24 +114,17 @@ export async function GET(request: NextRequest) {
               borderBottom: '4px solid rgba(255,165,0,0.6)',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '42px' }}>🔥</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <span style={{ fontSize: '48px' }}>🔥</span>
               <span style={{ 
-                fontSize: '32px',
+                fontSize: '36px',
                 fontWeight: 'bold',
                 color: 'white',
                 letterSpacing: '1px',
               }}>
-                RoastMe.AI
+                roastme.tocld.com
               </span>
             </div>
-            <span style={{ 
-              fontSize: '20px',
-              color: 'rgba(255,255,255,0.8)',
-              letterSpacing: '0.5px',
-            }}>
-              roastme.tocld.com
-            </span>
           </div>
           
           {/* Bottom Info Bar */}
