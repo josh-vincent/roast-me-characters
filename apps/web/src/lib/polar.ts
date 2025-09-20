@@ -15,7 +15,7 @@ if (process.env.NODE_ENV === 'development' && typeof window === 'undefined') {
     productIds: {
       '20_credits': productIds.product20,
       '50_credits': productIds.product50,
-      '250_credits': productIds.product250
+      '100_credits': productIds.product250  // Note: variable name kept for env compatibility
     }
   });
 }
@@ -41,13 +41,13 @@ function getProductIds() {
     return {
       product20: process.env.POLAR_SANDBOX_PRODUCT_ID_20_CREDITS!,
       product50: process.env.POLAR_SANDBOX_PRODUCT_ID_50_CREDITS!,
-      product250: process.env.POLAR_SANDBOX_PRODUCT_ID_250_CREDITS!,
+      product250: process.env.POLAR_SANDBOX_PRODUCT_ID_250_CREDITS!, // Now 100 credits, but env var name kept for compatibility
     };
   } else {
     return {
       product20: process.env.POLAR_PRODUCTION_PRODUCT_ID_20_CREDITS!,
       product50: process.env.POLAR_PRODUCTION_PRODUCT_ID_50_CREDITS!,
-      product250: process.env.POLAR_PRODUCTION_PRODUCT_ID_250_CREDITS!,
+      product250: process.env.POLAR_PRODUCTION_PRODUCT_ID_250_CREDITS!, // Now 100 credits, but env var name kept for compatibility
     };
   }
 }
@@ -61,22 +61,22 @@ export const CREDIT_PACKAGES: PolarProduct[] = (() => {
       id: productIds.product20,
       name: '20 Roast Credits',
       description: 'Generate 20 hilarious roast characters',
-      price: 500, // $4.99 in cents
+      price: 500, // $5.00 in cents
       credits: 20
     },
     {
       id: productIds.product50,
       name: '50 Roast Credits',
-      description: 'Generate 50 hilarious roast characters',
-      price: 2000, // $5.99 in cents (better value)
+      description: 'Generate 50 hilarious roast characters - Best Value!',
+      price: 1000, // $10.00 in cents (20% savings)
       credits: 50
     },
     {
       id: productIds.product250,
-      name: '250 Roast Credits', 
-      description: 'Generate 250 hilarious roast characters',
-      price: 50000, // $9.99 in cents (best value)
-      credits: 250
+      name: '100 Roast Credits', 
+      description: 'Generate 100 hilarious roast characters - Pro Pack!',
+      price: 1500, // $15.00 in cents (25% savings)
+      credits: 100
     }
   ];
 })();
@@ -94,8 +94,8 @@ export async function createCheckoutSession(
 
     // Create a checkout session with Polar using real product IDs
     const baseUrl = process.env.NODE_ENV === 'development' 
-      ? `http://${process.env.NEXT_PUBLIC_APP_URL_DEV}`
-      : process.env.NEXT_PUBLIC_APP_URL;
+      ? `http://localhost:3002`  // Use localhost for development
+      : process.env.NEXT_PUBLIC_APP_URL;  // Already includes https://
       
     const checkoutSession = await polar.checkouts.create({
       products: [product.id],

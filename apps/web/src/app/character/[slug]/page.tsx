@@ -59,11 +59,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
 
     const character = result.character;
-    const title = character.og_title || 'AI Generated Roast Character';
-    const description = character.og_description || 
-      (character.generation_params?.roast_content 
-        ? `${character.generation_params.roast_content.roast_text} - ${character.generation_params.roast_content.punchline}`
-        : 'Transform your photos into hilarious roast figurines with AI');
+    const roastContent = character.generation_params?.roast_content;
+    const title = roastContent?.title 
+      ? `🔥 ${roastContent.title} - ${roastContent.figurine_name}`
+      : character.og_title || 'AI Generated Roast Character';
+    const description = roastContent
+      ? `${roastContent.roast_text} ${roastContent.punchline} 🎭 Transform yourself into a hilarious collectible figurine at Roast Me Characters!`
+      : character.og_description || 'Transform your photos into hilarious roast figurines with AI';
 
     // Generate OG image URL with better fallbacks
     // Try to get the current request URL for accurate metadata
@@ -127,26 +129,52 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         title,
         description,
         url: `${baseUrl}/character/${character.seo_slug}`,
-        siteName: 'Roast Me Characters',
+        siteName: '🔥 Roast Me Characters',
         locale: 'en_US',
         type: 'article',
         publishedTime: character.created_at,
+        authors: ['Roast Me Characters'],
+        tags: roastContent ? [
+          'AI Art',
+          'Funny',
+          'Roast',
+          'Character Design',
+          roastContent.figurine_name,
+          ...(character.features?.map((f: any) => f.feature_name) || [])
+        ] : ['AI Art', 'Character Generator'],
         images: [
           {
             url: ogImageUrl.toString(),
             width: 1200,
             height: 630,
-            alt: title,
+            alt: `${title} - Hilarious AI Roast Character`,
             type: 'image/png',
+            secureUrl: ogImageUrl.toString(),
           },
         ],
       },
       twitter: {
         card: 'summary_large_image',
-        title,
-        description,
+        title: title.length > 70 ? title.substring(0, 67) + '...' : title,
+        description: description.length > 200 ? description.substring(0, 197) + '...' : description,
         images: [ogImageUrl.toString()],
         creator: '@roastme_chars',
+        site: '@roastme_chars',
+      },
+      // Additional metadata for WhatsApp, Facebook, etc.
+      other: {
+        'og:image:width': '1200',
+        'og:image:height': '630',
+        'og:image:secure_url': ogImageUrl.toString(),
+        'og:video': character.model_url || '',
+        'article:author': 'Roast Me Characters',
+        'article:published_time': character.created_at,
+        'article:tag': roastContent?.figurine_name || 'AI Character',
+        'fb:app_id': process.env.NEXT_PUBLIC_FB_APP_ID || '',
+        'twitter:app:id:iphone': '',
+        'twitter:app:id:ipad': '',
+        'twitter:app:id:googleplay': '',
+        'al:web:url': `${baseUrl}/character/${character.seo_slug}`,
       },
       robots: {
         index: true,
