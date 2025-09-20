@@ -68,21 +68,31 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     } else {
       baseUrl = 'http://localhost:3000';
     }
+    // Get the original and generated image URLs from the correct fields
+    const originalImageUrl = character.generation_params?.original_image_url || 
+                            character.image?.file_url || '';
+    const generatedImageUrl = character.model_url || '';
+    
     // Use composite OG URL if available, otherwise build it
     let ogImageUrlString = '';
-    if (character.generation_params?.composite_og_url && character.generated_image_url) {
+    if (character.generation_params?.composite_og_url && generatedImageUrl) {
       // Use the pre-generated composite URL once AI image is ready
       ogImageUrlString = character.generation_params.composite_og_url;
-    } else {
-      // Build URL for images (no title/punchline for clean design)
+    } else if (originalImageUrl && generatedImageUrl) {
+      // Build composite URL for images with before/after
       const ogImageUrl = new URL('/api/og', baseUrl);
-      if (character.original_image_url) {
-        ogImageUrl.searchParams.set('original', character.original_image_url);
-      }
-      if (character.generated_image_url) {
-        ogImageUrl.searchParams.set('generated', character.generated_image_url);
+      ogImageUrl.searchParams.set('original', originalImageUrl);
+      ogImageUrl.searchParams.set('generated', generatedImageUrl);
+      if (roastContent?.title) {
+        ogImageUrl.searchParams.set('title', roastContent.title);
       }
       ogImageUrlString = ogImageUrl.toString();
+    } else if (generatedImageUrl) {
+      // Fallback to just the generated image if no original
+      ogImageUrlString = generatedImageUrl;
+    } else {
+      // Ultimate fallback to a default OG image
+      ogImageUrlString = `${baseUrl}/og-default.png`;
     }
 
     return {

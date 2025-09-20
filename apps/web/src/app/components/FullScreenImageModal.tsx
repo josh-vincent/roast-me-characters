@@ -172,7 +172,7 @@ export function FullScreenImageModal({
 
       {/* Image container */}
       <div 
-        className="absolute inset-0 flex items-center justify-center"
+        className="absolute inset-0 flex items-center justify-center p-0 sm:p-8"
         onClick={(e) => {
           // Close modal if clicking the background (not the image)
           if (e.target === e.currentTarget) {
@@ -181,8 +181,8 @@ export function FullScreenImageModal({
         }}
       >
         <div 
-          className={`relative w-full h-full flex items-center justify-center transition-transform duration-300 ease-out ${
-            isZoomed ? 'scale-150 sm:scale-200' : 'scale-100'
+          className={`relative w-full h-full sm:max-w-4xl sm:max-h-[90vh] flex items-center justify-center transition-transform duration-300 ease-out ${
+            isZoomed ? 'scale-150 sm:scale-125' : 'scale-100'
           }`}
           style={{
             touchAction: 'manipulation',
@@ -205,7 +205,7 @@ export function FullScreenImageModal({
               <img
                 src={imageSrc}
                 alt="Loading..."
-                className="absolute inset-0 w-full h-full object-contain blur-sm transition-opacity duration-300"
+                className="w-full h-full object-contain blur-sm transition-opacity duration-300"
                 style={{ opacity: imageLoaded ? '0' : '1' }}
               />
               
@@ -217,10 +217,9 @@ export function FullScreenImageModal({
                   figurineName ? `&figurine=${encodeURIComponent(figurineName)}` : ''
                 }`}
                 alt={imageAlt}
-                className={`w-full h-full object-contain`}
+                className="w-full h-full object-contain transition-opacity duration-300"
                 style={{
-                  opacity: imageLoaded ? '1' : '0',
-                  display: imageLoaded ? 'block' : 'none'
+                  opacity: imageLoaded ? '1' : '0'
                 }}
                 onLoad={() => setImageLoaded(true)}
                 onError={() => {
