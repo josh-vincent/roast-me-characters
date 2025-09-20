@@ -234,12 +234,42 @@ export async function getRecentCharacters(limit = 10) {
 
     console.log('Querying roast_me_ai_characters table...');
 
-    // Try a more targeted query with only existing columns
-    const { data, error } = await supabase
-      .from('roast_me_ai_characters')
-      .select('id, created_at, model_url, thumbnail_url, is_public, seo_slug, image_id, ai_features_json, user_id')
-      .order('created_at', { ascending: false })
-      .limit(limit);
+    // Add timeout to prevent build hangs
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+    let data = null;
+    let error = null;
+    
+    try {
+      // Try a more targeted query with only existing columns
+      const queryPromise = supabase
+        .from('roast_me_ai_characters')
+        .select('id, created_at, model_url, thumbnail_url, is_public, seo_slug, image_id, ai_features_json, user_id')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+      
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Query timeout')), 5000);
+      });
+      
+      const result = await Promise.race([
+        queryPromise,
+        timeoutPromise
+      ]) as any;
+      
+      clearTimeout(timeoutId);
+      data = result.data;
+      error = result.error;
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      if (err?.message === 'Query timeout') {
+        console.error('Database query timed out in getRecentCharacters');
+        return [];
+      }
+      console.error('Query error:', err);
+      return [];
+    }
     
     if (error) {
       console.error('Database error in getRecentCharacters:', {
@@ -257,16 +287,26 @@ export async function getRecentCharacters(limit = 10) {
     if (data && data.length > 0) {
       console.log('Fetching related image data...');
       
-      // Get image data for each character
+      // Get image data for each character with timeout using Promise.race
       const charactersWithImages = await Promise.all(
         data.map(async (character: any) => {
           if (character.image_id && supabase) {
             try {
-              const { data: imageData, error: imageError } = await supabase
+              // Use Promise.race for timeout since abortSignal may not be supported on all queries
+              const imageDataPromise = supabase
                 .from('roast_me_ai_image_uploads')
                 .select('*')
                 .eq('id', character.image_id)
                 .single();
+              
+              const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('Image fetch timeout')), 2000);
+              });
+              
+              const { data: imageData, error: imageError } = await Promise.race([
+                imageDataPromise,
+                timeoutPromise
+              ]) as any;
               
               if (!imageError && imageData) {
                 return {
@@ -307,47 +347,86 @@ export async function getCharacterBySlug(slug: string): Promise<any | null> {
     return null;
   }
   
-  const { data, error } = await supabase
-    .from('roast_me_ai_characters')
-    .select('*')
-    .eq('seo_slug', slug)
-    .eq('is_public', true)
-    .maybeSingle(); // Use maybeSingle to handle 0 rows gracefully
+  // Add timeout to prevent build hangs
+  let timeoutId: NodeJS.Timeout | undefined;
   
-  if (error) {
-    console.error('Database error:', error);
-    return null;
-  }
-  
-  // Return null if no character found
-  if (!data) {
-    return null;
-  }
-  
-  // Get image data separately if image_id exists
-  let image = null;
-  if ((data as any).image_id) {
-    try {
-      const { data: imageData, error: imageError } = await supabase
-        .from('roast_me_ai_image_uploads')
-        .select('*')
-        .eq('id', (data as any).image_id)
-        .single();
-      
-      if (!imageError && imageData) {
-        image = imageData;
+  try {
+    // Use Promise.race for timeout since abortSignal may not be supported after maybeSingle
+    const queryPromise = supabase
+      .from('roast_me_ai_characters')
+      .select('*')
+      .eq('seo_slug', slug)
+      .eq('is_public', true)
+      .maybeSingle(); // Use maybeSingle to handle 0 rows gracefully
+    
+    const timeoutPromise = new Promise((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error('Query timeout')), 5000);
+    });
+    
+    const { data, error } = await Promise.race([
+      queryPromise,
+      timeoutPromise
+    ]) as any;
+    
+    if (timeoutId) clearTimeout(timeoutId);
+    
+    if (error) {
+      if (error?.message === 'Query timeout') {
+        console.error('Database query timed out for slug:', slug);
+        return null;
       }
-    } catch (imageErr) {
-      console.error('Error fetching image for character:', (data as any).id, imageErr);
+      console.error('Database error:', error);
+      return null;
     }
+    
+    // Return null if no character found
+    if (!data) {
+      return null;
+    }
+    
+    // Get image data separately if image_id exists with timeout
+    let image = null;
+    if ((data as any).image_id) {
+      try {
+        // Use Promise.race for timeout since abortSignal may not be supported on all queries
+        const imageDataPromise = supabase
+          .from('roast_me_ai_image_uploads')
+          .select('*')
+          .eq('id', (data as any).image_id)
+          .single();
+        
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Image fetch timeout')), 3000);
+        });
+        
+        const { data: imageData, error: imageError } = await Promise.race([
+          imageDataPromise,
+          timeoutPromise
+        ]) as any;
+        
+        if (!imageError && imageData) {
+          image = imageData;
+        }
+      } catch (imageErr) {
+        console.error('Error fetching image for character:', (data as any).id, imageErr);
+      }
+    }
+    
+    // Transform JSON features back to the expected format
+    return {
+      ...(data as any),
+      image: image,
+      features: (data as any).ai_features_json?.features || []
+    };
+  } catch (err: any) {
+    if (timeoutId) clearTimeout(timeoutId);
+    if (err?.message === 'Query timeout') {
+      console.error('Database query timed out for slug:', slug);
+      return null;
+    }
+    console.error('Unexpected error in getCharacterBySlug:', err);
+    return null;
   }
-  
-  // Transform JSON features back to the expected format
-  return {
-    ...(data as any),
-    image: image,
-    features: (data as any).ai_features_json?.features || []
-  };
 }
 
 export async function getCharacterById(id: string): Promise<any | null> {
@@ -356,46 +435,85 @@ export async function getCharacterById(id: string): Promise<any | null> {
     return null;
   }
   
-  const { data, error } = await supabase
-    .from('roast_me_ai_characters')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle(); // Use maybeSingle to handle 0 rows gracefully
+  // Add timeout to prevent build hangs
+  let timeoutId: NodeJS.Timeout | undefined;
   
-  if (error) {
-    console.error('Database error:', error);
-    return null;
-  }
-  
-  // Return null if no character found
-  if (!data) {
-    return null;
-  }
-  
-  // Get image data separately if image_id exists
-  let image = null;
-  if ((data as any).image_id) {
-    try {
-      const { data: imageData, error: imageError } = await supabase
-        .from('roast_me_ai_image_uploads')
-        .select('*')
-        .eq('id', (data as any).image_id)
-        .single();
-      
-      if (!imageError && imageData) {
-        image = imageData;
+  try {
+    // Use Promise.race for timeout since abortSignal may not be supported after maybeSingle
+    const queryPromise = supabase
+      .from('roast_me_ai_characters')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle(); // Use maybeSingle to handle 0 rows gracefully
+    
+    const timeoutPromise = new Promise((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error('Query timeout')), 5000);
+    });
+    
+    const { data, error } = await Promise.race([
+      queryPromise,
+      timeoutPromise
+    ]) as any;
+    
+    if (timeoutId) clearTimeout(timeoutId);
+    
+    if (error) {
+      if (error?.message === 'Query timeout') {
+        console.error('Database query timed out for id:', id);
+        return null;
       }
-    } catch (imageErr) {
-      console.error('Error fetching image for character:', (data as any).id, imageErr);
+      console.error('Database error:', error);
+      return null;
     }
+    
+    // Return null if no character found
+    if (!data) {
+      return null;
+    }
+    
+    // Get image data separately if image_id exists with timeout
+    let image = null;
+    if ((data as any).image_id) {
+      try {
+        // Use Promise.race for timeout since abortSignal may not be supported on all queries
+        const imageDataPromise = supabase
+          .from('roast_me_ai_image_uploads')
+          .select('*')
+          .eq('id', (data as any).image_id)
+          .single();
+        
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Image fetch timeout')), 3000);
+        });
+        
+        const { data: imageData, error: imageError } = await Promise.race([
+          imageDataPromise,
+          timeoutPromise
+        ]) as any;
+        
+        if (!imageError && imageData) {
+          image = imageData;
+        }
+      } catch (imageErr) {
+        console.error('Error fetching image for character:', (data as any).id, imageErr);
+      }
+    }
+    
+    // Transform JSON features back to the expected format
+    return {
+      ...(data as any),
+      image: image,
+      features: (data as any).ai_features_json?.features || []
+    };
+  } catch (err: any) {
+    if (timeoutId) clearTimeout(timeoutId);
+    if (err?.message === 'Query timeout') {
+      console.error('Database query timed out for id:', id);
+      return null;
+    }
+    console.error('Unexpected error in getCharacterById:', err);
+    return null;
   }
-  
-  // Transform JSON features back to the expected format
-  return {
-    ...(data as any),
-    image: image,
-    features: (data as any).ai_features_json?.features || []
-  };
 }
 
 export async function incrementViewCount(characterId: string): Promise<boolean> {

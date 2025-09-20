@@ -15,33 +15,10 @@ interface PageProps {
 }
 
 // Pre-render popular character pages at build time
+// Temporarily disable static generation due to database timeout issues
+// Characters will be rendered on-demand
 export async function generateStaticParams() {
-  try {
-    // Use direct Supabase client for static generation (no cookies needed)
-    const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-    
-    // Get the 20 most popular characters to pre-render
-    const { data: characters } = await supabase
-      .from('roast_me_ai_characters')
-      .select('seo_slug')
-      .eq('public', true)
-      .not('model_url', 'is', null)
-      .order('view_count', { ascending: false })
-      .limit(20);
-    
-    if (!characters) return [];
-    
-    return characters.map((character) => ({
-      slug: character.seo_slug,
-    }));
-  } catch (error) {
-    console.error('Error generating static params:', error);
-    return [];
-  }
+  return [];
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

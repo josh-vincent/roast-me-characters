@@ -20,13 +20,36 @@ export async function getRecentCharactersAction() {
     
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
-    const { data: characters, error } = await supabase
-      .from('roast_me_ai_characters')
-      .select('id,seo_slug,og_title,og_description,model_url,thumbnail_url,medium_url,view_count,likes,created_at,is_public,generation_params')
-      .eq('is_public', true)
-      .not('model_url', 'is', null)
-      .order('created_at', { ascending: false })
-      .limit(12);
+    // Add timeout to prevent build hangs
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
+    let characters = null;
+    let error = null;
+    
+    try {
+      const result = await supabase
+        .from('roast_me_ai_characters')
+        .select('id,seo_slug,og_title,og_description,model_url,thumbnail_url,medium_url,view_count,likes,created_at,is_public,generation_params')
+        .eq('is_public', true)
+        .not('model_url', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(12)
+        .abortSignal(controller.signal);
+      
+      clearTimeout(timeoutId);
+      characters = result.data;
+      error = result.error;
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      // Handle timeout or other errors
+      console.error('Query error:', err);
+      return {
+        success: false,
+        error: err.name === 'AbortError' ? 'Database query timed out' : 'Failed to load characters',
+        characters: []
+      };
+    }
 
     if (error) {
       console.error('Database error in getRecentCharacters:', {
