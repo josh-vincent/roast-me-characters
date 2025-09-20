@@ -43,35 +43,35 @@ export function ImageWithBanner({
     return transformUrl;
   };
 
-  // Disable composite image creation for better performance and caching
-  // useEffect(() => {
-  //   if (imageLoaded && showBanner && !compositeImageSrc && !isCreatingComposite) {
-  //     setIsCreatingComposite(true);
-  //     addBannerToImage(imageSrc, bannerText)
-  //       .then((dataUrl) => {
-  //         setCompositeImageSrc(dataUrl);
-  //       })
-  //       .catch((error) => {
-  //         console.error('Failed to create composite image:', error);
-  //         // Fallback to original image
-  //         setCompositeImageSrc(src);
-  //       })
-  //       .finally(() => {
-  //         setIsCreatingComposite(false);
-  //       });
-  //   }
-  // }, [imageLoaded, showBanner, imageSrc, bannerText, compositeImageSrc, isCreatingComposite]);
+  // Create composite image with banner for downloads/shares
+  useEffect(() => {
+    if (imageLoaded && showBanner && !compositeImageSrc && !isCreatingComposite) {
+      setIsCreatingComposite(true);
+      addBannerToImage(imageSrc, bannerText)
+        .then((dataUrl) => {
+          setCompositeImageSrc(dataUrl);
+        })
+        .catch((error) => {
+          console.error('Failed to create composite image:', error);
+          // Fallback to original image
+          setCompositeImageSrc(src);
+        })
+        .finally(() => {
+          setIsCreatingComposite(false);
+        });
+    }
+  }, [imageLoaded, showBanner, imageSrc, bannerText, compositeImageSrc, isCreatingComposite, src]);
 
   // Update imageSrc when src prop changes
   useEffect(() => {
     setImageSrc(src);
   }, [src]);
 
-  // Always show original image with CSS overlay for better performance and caching
+  // Show composite image with banner when available, otherwise show original with CSS overlay
   return (
     <div className={`relative ${fill ? 'w-full h-full' : ''} ${className}`}>
       <Image
-        src={imageSrc}
+        src={compositeImageSrc || imageSrc}
         alt={alt}
         fill={fill}
         width={width}
@@ -90,8 +90,8 @@ export function ImageWithBanner({
         sizes={sizes || (fill ? "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" : undefined)}
       />
       
-      {/* CSS Overlay Banner */}
-      {showBanner && imageLoaded && (
+      {/* CSS Overlay Banner as fallback if composite not created */}
+      {showBanner && imageLoaded && !compositeImageSrc && (
         <div className="absolute top-0 left-0 right-0 z-10">
           <div className="bg-black/75 backdrop-blur-sm">
             <div className="bg-gradient-to-b from-black/80 to-black/60 px-4 py-2">

@@ -27,6 +27,34 @@ export async function GET(request: NextRequest) {
           position: 'relative',
         }}
       >
+        {/* Top Banner */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '0',
+            left: '0',
+            right: '0',
+            background: 'linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 100%)',
+            padding: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '12px',
+            borderBottom: '2px solid rgba(255,255,255,0.1)',
+          }}
+        >
+          <span style={{ display: 'flex', fontSize: '28px' }}>🔥</span>
+          <span style={{ 
+            display: 'flex', 
+            fontSize: '24px',
+            fontWeight: 'bold',
+            color: 'white',
+            letterSpacing: '0.5px',
+          }}>
+            roastme.tocld.com
+          </span>
+        </div>
+
         {/* Title */}
         <div
           style={{
@@ -35,6 +63,7 @@ export async function GET(request: NextRequest) {
             fontWeight: 'bold',
             color: '#1f2937',
             marginBottom: '40px',
+            marginTop: '20px',
             textAlign: 'center',
           }}
         >
@@ -185,22 +214,6 @@ export async function GET(request: NextRequest) {
           </div>
         ) : null}
 
-        {/* Watermark */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '20px',
-            right: '20px',
-            fontSize: '16px',
-            color: '#9ca3af',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
-        >
-          <span style={{ display: 'flex', fontSize: '20px' }}>🔥</span>
-          <span style={{ display: 'flex' }}>roastme.tocld.com</span>
-        </div>
       </div>
     ),
     {
