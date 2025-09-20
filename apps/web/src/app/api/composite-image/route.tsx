@@ -55,21 +55,22 @@ export async function GET(request: NextRequest) {
             </div>
           )}
           
-          {/* Original Image Overlay - Bottom Left (1/6 size) */}
+          {/* Original Image Overlay - Bottom Left (larger, no text) */}
           {originalImage && (
             <div
               style={{
                 position: 'absolute',
                 bottom: '40px',
                 left: '40px',
-                width: '180px',
-                height: '180px',
+                width: '280px',
+                height: '280px',
                 background: 'white',
-                borderRadius: '12px',
-                padding: '4px',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+                borderRadius: '16px',
+                padding: '8px',
+                boxShadow: '0 12px 48px rgba(0,0,0,0.3)',
                 display: 'flex',
-                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
               <img
@@ -77,25 +78,11 @@ export async function GET(request: NextRequest) {
                 alt="Original"
                 style={{ 
                   width: '100%',
-                  height: '150px',
+                  height: '100%',
                   objectFit: 'cover',
-                  borderRadius: '8px 8px 0 0',
+                  borderRadius: '12px',
                 }}
               />
-              <div
-                style={{
-                  background: 'rgba(0,0,0,0.8)',
-                  color: 'white',
-                  fontSize: '12px',
-                  fontWeight: 'bold',
-                  textAlign: 'center',
-                  padding: '4px 0',
-                  borderRadius: '0 0 8px 8px',
-                  letterSpacing: '1px',
-                }}
-              >
-                ORIGINAL
-              </div>
             </div>
           )}
           

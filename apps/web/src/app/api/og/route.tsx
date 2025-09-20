@@ -77,29 +77,13 @@ export async function GET(request: NextRequest) {
               position: 'relative',
             }}
           >
-            {/* Original Label */}
-            <div
-              style={{
-                position: 'absolute',
-                top: '30px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                fontSize: '24px',
-                fontWeight: 'bold',
-                color: '#6b7280',
-                letterSpacing: '3px',
-                textTransform: 'uppercase',
-              }}
-            >
-              Original
-            </div>
             {originalImage ? (
               <img
                 src={originalImage}
                 alt="Original"
                 style={{ 
-                  width: '85%',
-                  height: '70%',
+                  width: '90%',
+                  height: '80%',
                   objectFit: 'cover',
                   borderRadius: '16px',
                   boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
