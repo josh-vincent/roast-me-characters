@@ -7,6 +7,47 @@
       "maxDuration": 10
     }
   },
+  "images": {
+    "sizes": [16, 32, 48, 64, 96, 128, 256, 320, 420, 768, 1024, 1200, 2048, 3840],
+    "minimumCacheTTL": 604800,
+    "formats": ["image/avif", "image/webp"],
+    "dangerouslyAllowSVG": true,
+    "contentSecurityPolicy": "default-src 'self'; script-src 'none'; sandbox;",
+    "remotePatterns": [
+      {
+        "protocol": "https",
+        "hostname": "**.supabase.co"
+      },
+      {
+        "protocol": "https",
+        "hostname": "images.unsplash.com"
+      },
+      {
+        "protocol": "https",
+        "hostname": "*.placehold.co"
+      },
+      {
+        "protocol": "https",
+        "hostname": "placehold.co"
+      },
+      {
+        "protocol": "https",
+        "hostname": "via.placeholder.com"
+      },
+      {
+        "protocol": "https",
+        "hostname": "*.redd.it"
+      },
+      {
+        "protocol": "https",
+        "hostname": "*.media-amazon.com"
+      },
+      {
+        "protocol": "https",
+        "hostname": "*.tocld.com"
+      }
+    ]
+  },
   "headers": [
     {
       "source": "/api/og",
