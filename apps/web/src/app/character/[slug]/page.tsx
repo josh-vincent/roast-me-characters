@@ -93,11 +93,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
     const ogImageUrl = new URL('/api/og', baseUrl);
     
-    if (character.image?.file_url) {
-      ogImageUrl.searchParams.set('original', character.image.file_url);
+    // Use the correct field names from the database
+    if (character.original_image_url) {
+      ogImageUrl.searchParams.set('original', character.original_image_url);
     }
-    if (character.model_url) {
-      ogImageUrl.searchParams.set('generated', character.model_url);
+    if (character.generated_image_url) {
+      ogImageUrl.searchParams.set('generated', character.generated_image_url);
     }
     ogImageUrl.searchParams.set('title', title);
     if (character.generation_params?.roast_content?.punchline) {

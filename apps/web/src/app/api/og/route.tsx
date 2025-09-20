@@ -34,22 +34,24 @@ export async function GET(request: NextRequest) {
             top: '0',
             left: '0',
             right: '0',
-            background: 'linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 100%)',
-            padding: '20px',
+            background: 'linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 100%)',
+            padding: '24px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '12px',
-            borderBottom: '2px solid rgba(255,255,255,0.1)',
+            gap: '16px',
+            borderBottom: '3px solid rgba(255,165,0,0.5)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
           }}
         >
-          <span style={{ display: 'flex', fontSize: '28px' }}>🔥</span>
+          <span style={{ display: 'flex', fontSize: '36px' }}>🔥</span>
           <span style={{ 
             display: 'flex', 
-            fontSize: '24px',
+            fontSize: '28px',
             fontWeight: 'bold',
             color: 'white',
-            letterSpacing: '0.5px',
+            letterSpacing: '1px',
+            textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
           }}>
             roastme.tocld.com
           </span>
@@ -59,12 +61,13 @@ export async function GET(request: NextRequest) {
         <div
           style={{
             display: 'flex',
-            fontSize: '48px',
+            fontSize: '42px',
             fontWeight: 'bold',
             color: '#1f2937',
-            marginBottom: '40px',
-            marginTop: '20px',
+            marginBottom: '30px',
+            marginTop: '100px',
             textAlign: 'center',
+            maxWidth: '900px',
           }}
         >
           {title}
@@ -90,34 +93,37 @@ export async function GET(request: NextRequest) {
             <div
               style={{
                 display: 'flex',
-                fontSize: '24px',
+                fontSize: '20px',
                 fontWeight: 'bold',
-                color: '#374151',
-                marginBottom: '20px',
+                color: '#6b7280',
+                marginBottom: '16px',
+                letterSpacing: '2px',
+                textTransform: 'uppercase',
               }}
             >
-              BEFORE
+              Original
             </div>
             <div
               style={{
-                width: '300px',
-                height: '300px',
-                borderRadius: '20px',
+                width: '320px',
+                height: '320px',
+                borderRadius: '24px',
                 overflow: 'hidden',
-                border: '4px solid #e5e7eb',
+                border: '6px solid #e5e7eb',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: '#f3f4f6',
+                background: '#ffffff',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
               }}
             >
               {originalImage ? (
                 <img
                   src={originalImage}
                   alt="Original"
-                  width="300"
-                  height="300"
-                  style={{ objectFit: 'cover' }}
+                  width="320"
+                  height="320"
+                  style={{ objectFit: 'cover', width: '100%', height: '100%' }}
                 />
               ) : (
                 <div style={{ display: 'flex', fontSize: '60px' }}>📷</div>
@@ -130,8 +136,10 @@ export async function GET(request: NextRequest) {
             style={{
               display: 'flex',
               alignItems: 'center',
-              fontSize: '60px',
-              color: '#6366f1',
+              fontSize: '48px',
+              color: '#f97316',
+              fontWeight: 'bold',
+              textShadow: '2px 2px 8px rgba(0,0,0,0.1)',
             }}
           >
             →
@@ -148,34 +156,37 @@ export async function GET(request: NextRequest) {
             <div
               style={{
                 display: 'flex',
-                fontSize: '24px',
+                fontSize: '20px',
                 fontWeight: 'bold',
-                color: '#374151',
-                marginBottom: '20px',
+                color: '#f97316',
+                marginBottom: '16px',
+                letterSpacing: '2px',
+                textTransform: 'uppercase',
               }}
             >
-              AFTER
+              AI Roasted
             </div>
             <div
               style={{
-                width: '300px',
-                height: '300px',
-                borderRadius: '20px',
+                width: '320px',
+                height: '320px',
+                borderRadius: '24px',
                 overflow: 'hidden',
-                border: '4px solid #e5e7eb',
+                border: '6px solid #fed7aa',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'linear-gradient(135deg, #ddd6fe 0%, #c7d2fe 100%)',
+                background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
+                boxShadow: '0 10px 40px rgba(251,146,60,0.2)',
               }}
             >
               {generatedImage ? (
                 <img
                   src={generatedImage}
                   alt="Generated"
-                  width="300"
-                  height="300"
-                  style={{ objectFit: 'cover' }}
+                  width="320"
+                  height="320"
+                  style={{ objectFit: 'cover', width: '100%', height: '100%' }}
                 />
               ) : (
                 <div style={{ display: 'flex', fontSize: '60px' }}>🎭</div>
@@ -189,13 +200,15 @@ export async function GET(request: NextRequest) {
           <div
             style={{
               display: 'flex',
-              fontSize: '22px',
+              fontSize: '24px',
               color: '#dc2626',
               textAlign: 'center',
-              marginTop: '40px',
+              marginTop: '35px',
               fontStyle: 'italic',
-              maxWidth: '800px',
-              padding: '0 20px',
+              fontWeight: '500',
+              maxWidth: '900px',
+              padding: '0 40px',
+              textShadow: '1px 1px 2px rgba(0,0,0,0.1)',
             }}
           >
             "{punchline}"
