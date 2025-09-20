@@ -76,7 +76,6 @@ export async function generateCharacter(formData: FormData): Promise<CharacterGe
     const characterData = {
       id: characterId,
       user_id: user?.id || null,
-      anon_id: user ? null : characterId,
       original_image_url: originalUrl,
       generated_image_url: null,
       generation_params: {

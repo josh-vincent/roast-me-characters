@@ -36,7 +36,6 @@ export interface GenerationParams extends ImageAnalysisResult {
 export interface Character {
   id: string
   user_id: string | null
-  anon_id: string | null
   original_image_url: string
   generated_image_url: string | null
   generation_params: GenerationParams
