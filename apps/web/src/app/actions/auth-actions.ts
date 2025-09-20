@@ -32,7 +32,7 @@ async function createSupabaseClient() {
   )
 }
 
-export async function signInWithGoogle(returnTo?: string) {
+export async function signInWithGoogle(returnTo?: string, anonSessionId?: string) {
   const supabase = await createSupabaseClient()
   
   // Get the base URL for the redirect
@@ -40,10 +40,13 @@ export async function signInWithGoogle(returnTo?: string) {
     ? 'http://localhost:3000'
     : process.env.NEXT_PUBLIC_APP_URL || 'https://roastme.tocld.com'
   
-  // Build the redirect URL with optional returnTo parameter
+  // Build the redirect URL with optional parameters
   const redirectUrl = new URL('/auth/callback', origin)
   if (returnTo) {
     redirectUrl.searchParams.set('returnTo', returnTo)
+  }
+  if (anonSessionId) {
+    redirectUrl.searchParams.set('anonSessionId', anonSessionId)
   }
 
   const { data, error } = await supabase.auth.signInWithOAuth({

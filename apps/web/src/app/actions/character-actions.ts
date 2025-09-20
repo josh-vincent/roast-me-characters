@@ -19,6 +19,7 @@ export async function generateCharacter(formData: FormData): Promise<CharacterGe
   try {
     const supabase = await createClient()
     const file = formData.get('image') as File
+    const anonSessionId = formData.get('anonSessionId') as string | null
     
     if (!file || file.size === 0) {
       return { success: false, error: 'No image provided' }
@@ -76,6 +77,7 @@ export async function generateCharacter(formData: FormData): Promise<CharacterGe
     const characterData = {
       id: characterId,
       user_id: user?.id || null,
+      session_id: !user && anonSessionId ? anonSessionId : null,
       original_image_url: originalUrl,
       generated_image_url: null,
       generation_params: {
@@ -173,6 +175,51 @@ export async function retryCharacterGeneration(characterId: string): Promise<Cha
 /**
  * Get recent characters for the gallery
  */
+/**
+ * Migrate anonymous characters to authenticated user
+ */
+export async function migrateAnonymousCharacters(sessionId: string): Promise<{ success: boolean; migratedCount?: number }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) {
+      return { success: false }
+    }
+    
+    // Find all characters with this session ID and no user ID
+    const { data: anonymousCharacters, error: fetchError } = await supabase
+      .from('roast_me_ai_characters')
+      .select('id')
+      .eq('session_id', sessionId)
+      .is('user_id', null)
+    
+    if (fetchError || !anonymousCharacters || anonymousCharacters.length === 0) {
+      return { success: true, migratedCount: 0 }
+    }
+    
+    // Update all anonymous characters to link to the authenticated user
+    const { error: updateError } = await supabase
+      .from('roast_me_ai_characters')
+      .update({ 
+        user_id: user.id,
+        session_id: null // Clear session ID after migration
+      })
+      .eq('session_id', sessionId)
+      .is('user_id', null)
+    
+    if (updateError) {
+      console.error('Error migrating characters:', updateError)
+      return { success: false }
+    }
+    
+    return { success: true, migratedCount: anonymousCharacters.length }
+  } catch (error) {
+    console.error('Error in migrateAnonymousCharacters:', error)
+    return { success: false }
+  }
+}
+
 export async function getRecentCharacters() {
   try {
     const supabase = await createClient()

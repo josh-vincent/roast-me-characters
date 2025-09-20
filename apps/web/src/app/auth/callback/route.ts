@@ -2,12 +2,14 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import type { Database } from '@/lib/supabase/types'
+import { migrateAnonymousCharacters } from '@/app/actions/character-actions'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/'
   const returnTo = searchParams.get('returnTo')
+  const anonSessionId = searchParams.get('anonSessionId')
 
   if (code) {
     const cookieStore = await cookies()
@@ -37,6 +39,12 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
+      // Migrate anonymous characters if session ID is provided
+      if (anonSessionId) {
+        const migrationResult = await migrateAnonymousCharacters(anonSessionId)
+        console.log('Migration result:', migrationResult)
+      }
+      
       const forwardedHost = request.headers.get('x-forwarded-host')
       const isLocalEnv = process.env.NODE_ENV === 'development'
       

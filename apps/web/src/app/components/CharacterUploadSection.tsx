@@ -1,17 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ImageUploadWithUrl } from '@roast-me/ui';
 import { generateCharacter } from '../actions/character-actions';
 import { useAuth } from '@/contexts/AuthContext';
 import { SignupPrompt } from '@/components/SignupPrompt';
+import { useAnonymousSession } from '@/hooks/useAnonymousSession';
 
 type WorkflowStep = 'upload' | 'generate';
 
 export function CharacterUploadSection() {
   const router = useRouter();
   const { user, signInWithGoogle, loading, getCredits } = useAuth();
+  const { getSessionId } = useAnonymousSession();
   const [currentStep, setCurrentStep] = useState<WorkflowStep>('upload');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +44,14 @@ export function CharacterUploadSection() {
         const blob = await response.blob();
         const file = new File([blob], 'image.jpg', { type: blob.type });
         formData.append('image', file);
+      }
+      
+      // Add anonymous session ID if user is not authenticated
+      if (!user) {
+        const sessionId = getSessionId();
+        if (sessionId) {
+          formData.append('anonSessionId', sessionId);
+        }
       }
       
       const result = await generateCharacter(formData);

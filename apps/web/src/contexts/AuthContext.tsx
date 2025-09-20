@@ -128,7 +128,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     loading,
     signInWithGoogle: async (returnTo?: string) => {
-      await signInWithGoogle(returnTo)
+      // Get anonymous session ID from localStorage
+      const anonSessionId = typeof window !== 'undefined' ? localStorage.getItem('anonSessionId') : null
+      await signInWithGoogle(returnTo, anonSessionId || undefined)
     },
     signOut: async () => {
       await signOut()
