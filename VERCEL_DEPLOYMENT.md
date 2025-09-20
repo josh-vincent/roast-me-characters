@@ -16,8 +16,10 @@ OPENAI_API_KEY=your_openai_key
 GOOGLE_GENERATIVE_AI_API_KEY=your_google_ai_key
 
 # Optional but recommended
-NEXT_PUBLIC_BASE_URL=https://your-custom-domain.com
+NEXT_PUBLIC_APP_URL=https://your-custom-domain.com  # MUST include https://
+NEXT_PUBLIC_BASE_URL=https://your-custom-domain.com  # MUST include https://
 AI_GATEWAY_API_KEY=your_ai_gateway_key
+XAI_API_KEY=your_xai_api_key  # For Grok roast generation
 
 # Payment (if using)
 POLAR_SANDBOX_ACCESS_TOKEN=your_polar_token

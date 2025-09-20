@@ -89,9 +89,9 @@ GOOGLE_GENERATIVE_AI_API_KEY=  # For Gemini image analysis/generation
 XAI_API_KEY=                   # For Grok roast generation (optional)
 AI_GATEWAY_API_KEY=            # For AI gateway routing (optional)
 
-# App URLs
-NEXT_PUBLIC_APP_URL=https://roastme.tocld.com  # Production URL
-NEXT_PUBLIC_BASE_URL=           # Optional, defaults to APP_URL
+# App URLs (MUST include https:// protocol)
+NEXT_PUBLIC_APP_URL=https://roastme.tocld.com  # Production URL (MUST include https://)
+NEXT_PUBLIC_BASE_URL=           # Optional, defaults to APP_URL (MUST include https:// if set)
 
 # Payment (Polar.sh)
 POLAR_SECRET_KEY=               # For credit purchases
