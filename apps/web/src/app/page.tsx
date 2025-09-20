@@ -4,8 +4,9 @@ import { RecentCharactersGallery } from './components/RecentCharactersGallery';
 import { MobileAppWaitlist } from './components/MobileAppWaitlist';
 import { Header } from './components/Header';
 
-// Enable ISR for the homepage - revalidate every 5 minutes
-export const revalidate = 300;
+// Enable ISR for the homepage - revalidate every hour
+// This prevents excessive database calls during build
+export const revalidate = 3600;
 
 export default async function HomePage() {
   // Fetch recent characters on server
