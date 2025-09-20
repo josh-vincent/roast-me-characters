@@ -68,14 +68,45 @@ export default function StaticCharacterView({ character }: StaticCharacterViewPr
     await shareCharacterUrl(url, character.generation_params?.roast_content?.title || 'Check out this roast!');
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (character.model_url) {
-      downloadImageWithBanner(
-        character.model_url,
-        character.generation_params?.roast_content?.figurine_name 
+      // Generate composite image URL with original overlay
+      const compositeUrl = new URL('/api/composite-image', window.location.origin);
+      compositeUrl.searchParams.set('main', character.model_url);
+      compositeUrl.searchParams.set('original', originalImageUrl);
+      if (character.generation_params?.roast_content?.title) {
+        compositeUrl.searchParams.set('title', character.generation_params.roast_content.title);
+      }
+      if (character.generation_params?.roast_content?.figurine_name) {
+        compositeUrl.searchParams.set('figurine', character.generation_params.roast_content.figurine_name);
+      }
+      
+      try {
+        // Fetch the composite image
+        const response = await fetch(compositeUrl.toString());
+        const blob = await response.blob();
+        
+        // Create download link
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = character.generation_params?.roast_content?.figurine_name 
           ? `${character.generation_params.roast_content.figurine_name.replace(/[^a-zA-Z0-9]/g, '-')}.png`
-          : 'roast-character.png'
-      );
+          : 'roast-character.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error('Failed to download composite image:', error);
+        // Fallback to original download
+        downloadImageWithBanner(
+          character.model_url,
+          character.generation_params?.roast_content?.figurine_name 
+            ? `${character.generation_params.roast_content.figurine_name.replace(/[^a-zA-Z0-9]/g, '-')}.png`
+            : 'roast-character.png'
+        );
+      }
     }
   };
 
