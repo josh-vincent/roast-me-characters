@@ -168,49 +168,6 @@ export async function GET(request: NextRequest) {
           </div>
         </div>
 
-        {/* Bottom text overlay */}
-        {(title || punchline) && (
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '0',
-              left: '0',
-              right: '0',
-              background: 'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.95) 50%, rgba(255,255,255,1) 100%)',
-              padding: '30px 40px 20px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '10px',
-            }}
-          >
-            {title && (
-              <div
-                style={{
-                  fontSize: '32px',
-                  fontWeight: 'bold',
-                  color: '#1f2937',
-                  textAlign: 'center',
-                }}
-              >
-                {title}
-              </div>
-            )}
-            {punchline && (
-              <div
-                style={{
-                  fontSize: '20px',
-                  color: '#dc2626',
-                  textAlign: 'center',
-                  fontStyle: 'italic',
-                  fontWeight: '500',
-                }}
-              >
-                "{punchline}"
-              </div>
-            )}
-          </div>
-        )}
 
       </div>
     ),
