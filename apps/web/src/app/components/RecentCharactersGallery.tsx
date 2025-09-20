@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { CharacterCard } from './CharacterCard';
 
 interface Character {
@@ -35,11 +36,11 @@ interface RecentCharactersGalleryProps {
 export function RecentCharactersGallery({ initialCharacters }: RecentCharactersGalleryProps) {
   if (!initialCharacters || initialCharacters.length === 0) {
     return (
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-12 bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Recent Roast Characters</h2>
-            <p className="text-gray-600 mb-8">Check back soon to see the latest character creations!</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Recent Creations</h2>
+            <p className="text-gray-600 text-sm sm:text-base mb-8">Be the first to create a roast character!</p>
             <div className="text-6xl text-gray-300">🎭</div>
           </div>
         </div>
@@ -48,26 +49,27 @@ export function RecentCharactersGallery({ initialCharacters }: RecentCharactersG
   }
 
   return (
-    <section className="py-16 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Recent Roast Characters</h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            See what hilarious roast figurines our community has been creating! Get inspired for your own character.
+    <section className="py-12 bg-white">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Recent Creations</h2>
+          <p className="text-gray-600 text-sm sm:text-base">
+            Explore the latest roast characters from our community
           </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
+        {/* Instagram-style grid: 1 column on mobile, 2 on sm, 3 on md, 4 on lg */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
           {initialCharacters.map((character) => (
             <CharacterCard key={character.id} character={character} />
           ))}
         </div>
 
-        {initialCharacters.length >= 12 && (
-          <div className="text-center mt-12">
-            <button className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg font-medium transition-colors">
-              View All Characters
-            </button>
+        {initialCharacters.length >= 8 && (
+          <div className="text-center mt-10">
+            <Link href="/gallery" className="inline-block text-purple-600 hover:text-purple-700 font-semibold text-sm transition-colors">
+              View all creations →
+            </Link>
           </div>
         )}
       </div>

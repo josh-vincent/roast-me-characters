@@ -19,6 +19,12 @@ interface Character {
       punchline: string;
       figurine_name: string;
     };
+    original_image_url?: string;
+    features?: Array<{
+      feature_name: string;
+      feature_value: string;
+      exaggeration_factor: number;
+    }>;
   };
   image?: {
     file_url: string;
@@ -37,6 +43,24 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
   const [character, setCharacter] = useState(initialCharacter);
   const [retryError, setRetryError] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [generationStep, setGenerationStep] = useState<'analyzing' | 'roasting' | 'creating' | 'finalizing'>('analyzing');
+  const [showRoast, setShowRoast] = useState(false);
+  
+  // Update generation steps based on data
+  useEffect(() => {
+    if (character.generation_params?.features && character.generation_params?.features.length > 0) {
+      setGenerationStep('roasting');
+    }
+    if (character.generation_params?.roast_content && !showRoast) {
+      setTimeout(() => {
+        setShowRoast(true);
+        setGenerationStep('creating');
+      }, 500);
+    }
+    if (character.model_url) {
+      setGenerationStep('finalizing');
+    }
+  }, [character.generation_params?.features, character.generation_params?.roast_content, character.model_url, showRoast]);
 
   // Poll for updates while generating
   useEffect(() => {
@@ -121,17 +145,40 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
 
           {/* Content */}
           <div className="p-8">
+            {/* Roast Content - Show at top when available */}
+            {showRoast && character.generation_params?.roast_content && (
+              <div className="mb-8 p-6 bg-gradient-to-br from-orange-50 to-red-50 rounded-lg border-2 border-orange-200 animate-fade-in">
+                <h3 className="text-xl font-bold text-orange-900 mb-3">
+                  🔥 {character.generation_params.roast_content.title}
+                </h3>
+                <p className="text-gray-800 mb-3 leading-relaxed">
+                  {character.generation_params.roast_content.roast_text}
+                </p>
+                <p className="text-orange-700 font-medium italic">
+                  "{character.generation_params.roast_content.punchline}"
+                </p>
+                <div className="mt-4 pt-4 border-t border-orange-200">
+                  <span className="text-sm text-orange-600">Figurine Name: </span>
+                  <span className="text-sm font-bold text-orange-800">
+                    {character.generation_params.roast_content.figurine_name}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Images Grid */}
             <div className="grid md:grid-cols-2 gap-8">
               {/* Original Image */}
-              {character.image?.file_url && (
+              {(character.generation_params?.original_image_url || character.image?.file_url) && (
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">Original Image</h3>
                   <div className="relative aspect-square bg-gray-50 rounded-xl overflow-hidden border-2 border-gray-200">
                     <Image
-                      src={character.image.file_url}
+                      src={character.generation_params?.original_image_url || character.image?.file_url || ''}
                       alt="Original uploaded image"
                       fill
                       className="object-cover"
+                      priority
                     />
                   </div>
                 </div>
@@ -139,9 +186,17 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
 
               {/* Generation Status */}
               <div className="space-y-4">
-                <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">AI Generation</h3>
+                <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">AI Character</h3>
                 <div className="relative aspect-square bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl overflow-hidden border-2 border-purple-200 flex items-center justify-center">
-                  {isGenerating ? (
+                  {character.model_url || character.thumbnail_url || character.medium_url ? (
+                    <Image
+                      src={character.model_url || character.medium_url || character.thumbnail_url || ''}
+                      alt="Generated character"
+                      fill
+                      className="object-cover"
+                      key={character.model_url} // Force re-render when URL changes
+                    />
+                  ) : isGenerating ? (
                     <div className="text-center">
                       <div className="mb-6">
                         <LoadingSpinner size="lg" />
@@ -155,17 +210,29 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
                       
                       {/* Progress indicators */}
                       <div className="mt-6 space-y-2">
-                        <div className="flex items-center justify-center space-x-2 text-sm text-purple-600">
-                          <span className="animate-pulse">🔍</span>
+                        <div className={`flex items-center justify-center space-x-2 text-sm ${
+                          generationStep === 'analyzing' ? 'text-purple-700 font-medium' : 
+                          character.generation_params?.features ? 'text-green-600' : 'text-purple-500'
+                        }`}>
+                          <span className={generationStep === 'analyzing' ? 'animate-pulse' : ''}>🔍</span>
                           <span>Analyzing features</span>
+                          {character.generation_params?.features && <span className="text-green-500">✓</span>}
                         </div>
-                        <div className="flex items-center justify-center space-x-2 text-sm text-purple-600">
-                          <span className="animate-pulse delay-75">🎨</span>
-                          <span>Creating caricature</span>
+                        <div className={`flex items-center justify-center space-x-2 text-sm ${
+                          generationStep === 'roasting' ? 'text-purple-700 font-medium' : 
+                          character.generation_params?.roast_content ? 'text-green-600' : 'text-purple-500'
+                        }`}>
+                          <span className={generationStep === 'roasting' ? 'animate-pulse' : ''}>🔥</span>
+                          <span>Writing savage roast</span>
+                          {character.generation_params?.roast_content && <span className="text-green-500">✓</span>}
                         </div>
-                        <div className="flex items-center justify-center space-x-2 text-sm text-purple-600">
-                          <span className="animate-pulse delay-150">🔥</span>
-                          <span>Writing roast</span>
+                        <div className={`flex items-center justify-center space-x-2 text-sm ${
+                          generationStep === 'creating' || generationStep === 'finalizing' ? 'text-purple-700 font-medium' : 
+                          character.model_url ? 'text-green-600' : 'text-purple-500'
+                        }`}>
+                          <span className={generationStep === 'creating' || generationStep === 'finalizing' ? 'animate-pulse' : ''}>🎨</span>
+                          <span>Creating character</span>
+                          {character.model_url && <span className="text-green-500">✓</span>}
                         </div>
                       </div>
                     </div>
@@ -197,6 +264,7 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
               </div>
             </div>
 
+            
             {/* Instructions */}
             <div className="mt-8 p-4 bg-purple-50 rounded-lg border border-purple-200">
               <h4 className="font-semibold text-purple-900 mb-2">What's happening?</h4>

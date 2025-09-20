@@ -166,7 +166,8 @@ export async function generateRoast(
       .join(', ');
 
     // Try to use Grok first if available, otherwise fall back to Gemini
-    if (process.env.XAI_API_KEY) {
+    // NOTE: Temporarily disabled - Grok v1 is incompatible with AI SDK v5
+    if (false && process.env.XAI_API_KEY) {
       try {
         // Use generateText with JSON mode for Grok compatibility
         const result = await generateText({
@@ -174,31 +175,36 @@ export async function generateRoast(
           messages: [
             {
               role: 'system',
-              content: `You are a professional roast comedian creating playful, accurate, brutal honest and humorous roasts for a caricature figurine generator.
+              content: `You are Jeff Ross, the Roastmaster General, writing SAVAGE roasts for a caricature figurine generator.
 
-Your goal is to create a FUNNY, PLAYFUL roast that makes people laugh - This is like a comedy roast where everyone has fun. Be brutal and honest.
+Your goal is to DESTROY them with humor - This is a BRUTAL comedy roast. No holding back. They signed up for this!
 
 You MUST respond with a valid JSON object in this exact format:
 {
-  "title": "A catchy, funny title (max 4 words)",
-  "roast_text": "2-3 sentences of playful roasting about their features",
-  "punchline": "A witty one-liner to finish strong",
-  "figurine_name": "A funny collectible name"
+  "title": "A savage title (max 4 words)",
+  "roast_text": "2-3 sentences of BRUTAL roasting about their features",
+  "punchline": "A devastating one-liner to finish them off",
+  "figurine_name": "A savage nickname"
 }
 
 ROAST STYLE:
-- Playful and humorous
-- Brutal and honest
-- Focus on the exaggerated features in a funny way
-- Think comedy club roast or friendly banter between friends
-- Make it quotable and shareable
-- Keep it clean and fun for all audiences
+- BRUTALLY HONEST - no sugar coating
+- SAVAGE but clever - think Comedy Central Roast level
+- Target their most prominent features MERCILESSLY
+- Use creative insults and comparisons
+- Make it so savage they'll screenshot it and share it
+- Push boundaries but keep it technically clean (no swearing)
 
-Remember: This should make the person LAUGH, It's all in good fun!`,
+Examples of the energy we want:
+- "Your forehead's so big, it has its own zip code"
+- "Those glasses are thicker than a bowl of oatmeal"
+- "Your nose entered the room 5 minutes before you did"
+
+Remember: They OPTED IN to be ROASTED. Make them regret it (in a fun way)!`,
             },
             {
               role: 'user',
-              content: `Create a hilarious roast for someone with these features: ${featureDescriptions}. They appear to be ${analysis.gender} and ${analysis.age_range} age range. Personality traits detected: ${analysis.personality_traits.join(', ')}. Remember to output valid JSON!`,
+              content: `DEMOLISH this ${analysis.gender} ${analysis.age_range} person with these features: ${featureDescriptions}. Personality traits: ${analysis.personality_traits.join(', ')}. Give them the SAVAGE roast they asked for! Remember to output valid JSON!`,
             },
           ],
         });
@@ -206,10 +212,10 @@ Remember: This should make the person LAUGH, It's all in good fun!`,
         // Parse the JSON response from Grok
         const roastData = JSON.parse(result.text);
         return {
-          title: roastData.title || 'The Roastee',
-          roast_text: roastData.roast_text || 'You have some distinctive features!',
-          punchline: roastData.punchline || 'And that\'s what makes you special!',
-          figurine_name: roastData.figurine_name || 'Unique One',
+          title: roastData.title || 'The Walking L',
+          roast_text: roastData.roast_text || 'You look like what happens when God hits random on character creation.',
+          punchline: roastData.punchline || 'Even your reflection needs therapy!',
+          figurine_name: roastData.figurine_name || 'Captain Yikes',
         };
       } catch (grokError) {
         console.warn('Grok generation failed, falling back to Gemini:', grokError);
@@ -226,34 +232,41 @@ Remember: This should make the person LAUGH, It's all in good fun!`,
         messages: [
         {
           role: 'system',
-          content: `You are a professional roast comedian creating playful, accurate,brutal honest and humorous roasts for a caricature figurine generator.
+          content: `You are channeling Jeff Ross, the Roastmaster General, writing SAVAGE roasts for a caricature figurine generator.
 
-Your goal is to create a FUNNY, PLAYFUL roast that makes people laugh - This is like a comedy roast where everyone has fun. Be brutal and honest.
+Your goal is to DEMOLISH them with humor - This is a BRUTAL comedy roast in the style of Comedy Central Roasts. They OPTED IN for this!
 
-ROAST STYLE:
-- Playful and humorous
-- Brutal and honest
-- Focus on the exaggerated features in a funny way
-- Think comedy club roast or friendly banter between friends
-- Make it quotable and shareable
-- Keep it clean and fun for all audiences
+ROAST STYLE - BE SAVAGE:
+- BRUTALLY HONEST - call out their features with NO MERCY
+- Use creative, devastating comparisons and metaphors
+- Target their most prominent features RELENTLESSLY
+- Think Comedy Central Roast level savage
+- Make them question their life choices
+- Push boundaries while staying technically clean
+
+SAVAGE EXAMPLES OF THE ENERGY:
+- "Your forehead's so big, NASA uses it to practice moon landings"
+- "Those ears could pick up WiFi from three blocks away"
+- "You look like a police sketch artist gave up halfway through"
+- "Your nose has its own gravitational pull"
+- "You're what happens when someone orders a human from Wish"
 
 STRUCTURE:
-- Title: A catchy, funny title (max 4 words like "The Ear Enthusiast" or "Nose Knows Best")
-- Roast Text: 2-3 sentences of playful roasting about their features
-- Punchline: A witty one-liner to finish strong
-- Figurine Name: A funny collectible name (like "Big Mike" or "Specs McGee")
+- Title: A SAVAGE title (max 4 words like "Walking Red Flag" or "Human Participation Trophy")
+- Roast Text: 2-3 sentences of MERCILESS roasting that will make them cry-laugh
+- Punchline: A DEVASTATING finisher that leaves them destroyed
+- Figurine Name: A BRUTAL nickname (like "Captain Forehead" or "The Human Yikes")
 
-Remember: This should make the person LAUGH, It's all in good fun!`,
+Remember: They ASKED FOR THIS. Give them a roast so savage they'll need therapy!`,
         },
         {
           role: 'user',
-          content: `Create a roast for a ${analysis.gender} ${analysis.age_range} person with these exaggerated features: ${featureDescriptions}. 
+          content: `ABSOLUTELY DESTROY this ${analysis.gender} ${analysis.age_range} person with these features: ${featureDescriptions}. 
           
           Personality traits: ${analysis.personality_traits.join(', ')}
           Character style: ${analysis.character_style}
           
-          Make it funny and quotable while being brutally honest and fun!`,
+          Give them the SAVAGE, BRUTAL roast they signed up for. Make Jeff Ross proud!`,
         },
         ],
       });

@@ -22,6 +22,7 @@ interface Character {
       figurine_name: string;
     };
     style?: string;
+    original_image_url?: string;
   };
   image?: {
     file_url: string;
@@ -36,6 +37,29 @@ interface StaticCharacterViewProps {
 }
 
 export default function StaticCharacterView({ character }: StaticCharacterViewProps) {
+  // Helper to get the original image URL
+  const getOriginalImageUrl = () => {
+    // First, check if it's explicitly stored in generation_params
+    if (character.generation_params?.original_image_url) {
+      return character.generation_params.original_image_url;
+    }
+    
+    // Second, check the image object
+    if (character.image?.file_url) {
+      return character.image.file_url;
+    }
+    
+    // Third, try to construct it from the storage bucket pattern
+    // The original images are stored as {characterId}/uploaded-original.png
+    // But for anonymous users, it might be anon-TIMESTAMP-{characterId}/TIMESTAMP.webp
+    const supabaseUrl = 'https://iwazmzjqbdnxvzqvuimt.supabase.co';
+    
+    // Try the standard pattern first
+    return `${supabaseUrl}/storage/v1/object/public/roast-me-ai/${character.id}/uploaded-original.png`;
+  };
+
+  const originalImageUrl = getOriginalImageUrl();
+
   const handleShare = async () => {
     const url = `${process.env.NEXT_PUBLIC_APP_URL || 'https://roastme.tocld.com'}/character/${character.seo_slug}`;
     await shareCharacterUrl(url, character.generation_params?.roast_content?.title || 'Check out this roast!');
@@ -103,87 +127,82 @@ export default function StaticCharacterView({ character }: StaticCharacterViewPr
 
             {/* Content Grid */}
             <div className="p-8">
-              <div className="grid lg:grid-cols-2 gap-12 max-w-5xl mx-auto">
+              {/* Roast Title */}
+              {character.generation_params?.roast_content && (
+                <div className="text-center mb-8">
+                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                    🔥 {character.generation_params.roast_content.title}
+                  </h1>
+                  <p className="text-lg text-gray-600">
+                    {character.generation_params.roast_content.figurine_name}
+                  </p>
+                </div>
+              )}
+              
+              {/* Before/After Images */}
+              <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto mb-8">
+                
+                {/* Original Image */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium text-gray-700 uppercase text-center">Before</h3>
+                  <div className="relative aspect-square bg-gray-50 rounded-xl overflow-hidden border-2 border-gray-200">
+                    <Image
+                      src={originalImageUrl}
+                      alt="Original photo"
+                      fill
+                      className="object-cover"
+                      priority={true}
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      onError={(e) => {
+                        // If the image fails to load, show a placeholder
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                </div>
                 
                 {/* Generated Character */}
                 <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-gray-700 uppercase">AI Roast Character</h3>
+                  <h3 className="text-sm font-medium text-gray-700 uppercase text-center">After (AI Roast)</h3>
                   <div className="relative aspect-square bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl overflow-hidden border-2 border-purple-200">
-                    <ImageWithBanner
-                      src={character.medium_url || character.model_url || ''}
-                      alt={character.generation_params?.roast_content?.title || 'Roast character'}
-                      fill
-                      showBanner={true}
-                      priority={true}
-                      sizes="(max-width: 768px) 100vw, 50vw"
-                    />
-                    
-                    {/* Original Image Overlay */}
-                    {character.image?.file_url && (
-                      <div className="absolute bottom-3 left-3 w-1/4 aspect-square bg-white rounded-lg overflow-hidden shadow-lg border-2 border-white">
-                        <Image
-                          src={character.image.file_url}
-                          alt="Original"
-                          fill
-                          className="object-cover"
-                          sizes="25vw"
-                        />
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Roast Content */}
-                  {character.generation_params?.roast_content && (
-                    <div className="p-4 bg-gradient-to-br from-orange-50 to-red-50 rounded-xl border border-orange-200">
-                      <h4 className="text-lg font-bold text-orange-800 mb-2">
-                        🔥 {character.generation_params.roast_content.title}
-                      </h4>
-                      <p className="text-sm text-orange-700 mb-2">
-                        {character.generation_params.roast_content.roast_text}
-                      </p>
-                      <p className="text-sm italic text-orange-800">
-                        "{character.generation_params.roast_content.punchline}"
-                      </p>
-                      <p className="text-xs text-orange-600 mt-2">
-                        Figurine: "{character.generation_params.roast_content.figurine_name}"
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Original Image */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-gray-700 uppercase">Original Photo</h3>
-                  <div className="relative aspect-square bg-gray-50 rounded-xl overflow-hidden border-2 border-gray-200">
-                    {character.image?.file_url && (
-                      <Image
-                        src={character.image.file_url}
-                        alt="Original uploaded image"
+                    {character.model_url ? (
+                      <ImageWithBanner
+                        src={character.medium_url || character.model_url}
+                        alt={character.generation_params?.roast_content?.title || 'Roast character'}
                         fill
-                        className="object-cover"
+                        showBanner={true}
+                        priority={true}
                         sizes="(max-width: 768px) 100vw, 50vw"
                       />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-center text-purple-600">
+                          <div className="text-4xl mb-2">🎭</div>
+                          <p className="text-sm">AI Character</p>
+                        </div>
+                      </div>
                     )}
                   </div>
-                  
-                  {/* Features */}
-                  {character.features && character.features.length > 0 && (
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">Exaggerated Features</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {character.features.map((feature, index) => (
-                          <span 
-                            key={index}
-                            className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full"
-                          >
-                            {feature.feature_name}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
+              
+              {/* Roast Content Box */}
+              {character.generation_params?.roast_content && (
+                <div className="max-w-3xl mx-auto">
+                  <div className="p-6 bg-gradient-to-br from-orange-50 to-red-50 rounded-xl border-2 border-orange-200">
+                    <h2 className="text-xl font-bold text-orange-900 mb-3">
+                      The Roast
+                    </h2>
+                    <p className="text-gray-800 mb-3 leading-relaxed">
+                      {character.generation_params.roast_content.roast_text}
+                    </p>
+                    <p className="text-lg font-medium italic text-orange-800 text-center py-3 border-t border-orange-200">
+                      "{character.generation_params.roast_content.punchline}"
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Action Bar */}

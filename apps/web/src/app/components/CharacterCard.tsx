@@ -53,7 +53,7 @@ export function CharacterCard({ character, showPrivacyBadge = false }: Character
 
   return (
     <>
-      <div className="group block bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-purple-200 transition-all duration-200 hover:scale-105 relative">
+      <div className="group block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200 relative">
         
         {/* Privacy Badge */}
         {showPrivacyBadge && (
@@ -164,79 +164,51 @@ export function CharacterCard({ character, showPrivacyBadge = false }: Character
           )}
         </div>
 
-        {/* Character Info */}
+        {/* Character Info - Instagram Style */}
         <Link href={`/character/${character.seo_slug}`}>
-          <div className="p-4 hover:bg-gray-50 transition-colors">
-          <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-purple-600 transition-colors">
-            {character.generation_params?.roast_content?.title || character.og_title || `Roast Character`}
-          </h3>
-          
-          {/* Roast Content Preview */}
-          {character.generation_params?.roast_content && (
-            <div className="mb-3 p-2 bg-orange-50 rounded-lg border border-orange-200">
-              <p className="text-xs text-orange-700 line-clamp-2 italic">
-                "{character.generation_params.roast_content.punchline}"
-              </p>
-              <p className="text-xs text-orange-600 font-medium mt-1">
-                {character.generation_params.roast_content.figurine_name}
-              </p>
-            </div>
-          )}
-          
-          {/* Features */}
-          {character.features && character.features.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-3">
-              {character.features.slice(0, 2).map((feature, index) => (
-                <span 
-                  key={index}
-                  className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full"
-                >
-                  {feature.feature_name}
-                </span>
-              ))}
-              {character.features.length > 2 && (
-                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                  +{character.features.length - 2}
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Style badge */}
-          {character.generation_params?.style && (
-            <div className="mb-3">
-              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full capitalize">
-                {character.generation_params.style}
+          <div className="p-3">
+            {/* Title and Figurine Name */}
+            <h3 className="font-bold text-gray-900 text-sm mb-1 group-hover:text-purple-600 transition-colors">
+              {character.generation_params?.roast_content?.title || character.og_title || `Roast Character`}
+            </h3>
+            
+            {/* Roast Content - Full text, no orange box */}
+            {character.generation_params?.roast_content && (
+              <div className="mb-2">
+                <p className="text-sm text-gray-700 line-clamp-3 leading-relaxed">
+                  {character.generation_params.roast_content.roast_text}
+                </p>
+                <p className="text-xs text-gray-500 italic mt-1">
+                  "{character.generation_params.roast_content.punchline}"
+                </p>
+              </div>
+            )}
+            
+            {/* Bottom Stats Bar - Fixed to bottom */}
+            <div className="flex items-center justify-between pt-2 mt-2 border-t border-gray-100">
+              <div className="flex items-center gap-3">
+                <button className="flex items-center gap-1 text-gray-600 hover:text-red-500 transition-colors">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                  <span className="text-sm font-medium">{character.likes || 0}</span>
+                </button>
+                <div className="flex items-center gap-1 text-gray-600">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  <span className="text-sm font-medium">{character.view_count || 0}</span>
+                </div>
+              </div>
+              <span className="text-xs text-gray-400">
+                {new Date(character.created_at).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  timeZone: 'UTC'
+                })}
               </span>
             </div>
-          )}
-
-          {/* Stats */}
-          <div className="flex items-center justify-between text-sm text-gray-500">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-                <span>{character.view_count || 0}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <svg className="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12,21.35L10.55,20.03C5.4,15.36 2,12.27 2,8.5 2,5.41 4.42,3 7.5,3C9.24,3 10.91,3.81 12,5.08C13.09,3.81 14.76,3 16.5,3C19.58,3 22,5.41 22,8.5C22,12.27 18.6,15.36 13.45,20.03L12,21.35Z" />
-                </svg>
-                <span>{character.likes || 0}</span>
-              </div>
-            </div>
-            <span className="text-xs">
-              {new Date(character.created_at).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                timeZone: 'UTC'
-              })}
-            </span>
-          </div>
           </div>
         </Link>
       </div>
