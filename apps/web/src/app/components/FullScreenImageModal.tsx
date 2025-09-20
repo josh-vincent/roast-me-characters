@@ -172,7 +172,7 @@ export function FullScreenImageModal({
 
       {/* Image container */}
       <div 
-        className="absolute inset-0 flex items-center justify-center p-4 pt-20 pb-16"
+        className="absolute inset-0 flex items-center justify-center"
         onClick={(e) => {
           // Close modal if clicking the background (not the image)
           if (e.target === e.currentTarget) {
@@ -181,7 +181,7 @@ export function FullScreenImageModal({
         }}
       >
         <div 
-          className={`relative max-w-full max-h-full transition-transform duration-300 ease-out ${
+          className={`relative w-full h-full flex items-center justify-center transition-transform duration-300 ease-out ${
             isZoomed ? 'scale-150 sm:scale-200' : 'scale-100'
           }`}
           style={{
@@ -198,15 +198,15 @@ export function FullScreenImageModal({
             </div>
           )}
           
-          {/* Use composite image API if we have original image, otherwise regular image */}
-          {originalImageSrc ? (
+          {/* Try composite image when we have an original, fallback to banner image */}
+          {originalImageSrc && originalImageSrc.includes('/storage/v1/object/public/roast-me-ai/') ? (
             <>
               {/* Low quality placeholder - use the cached main image */}
               <img
                 src={imageSrc}
                 alt="Loading..."
-                className="absolute inset-0 m-auto object-contain blur-sm transition-opacity duration-300"
-                style={{ maxWidth: '90%', maxHeight: '90%', opacity: imageLoaded ? '0' : '1' }}
+                className="absolute inset-0 w-full h-full object-contain blur-sm transition-opacity duration-300"
+                style={{ opacity: imageLoaded ? '0' : '1' }}
               />
               
               {/* High quality composite image with before/after and banner */}
@@ -217,50 +217,59 @@ export function FullScreenImageModal({
                   figurineName ? `&figurine=${encodeURIComponent(figurineName)}` : ''
                 }`}
                 alt={imageAlt}
-                className={`max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-opacity duration-300 ${
-                  imageLoaded ? 'opacity-100' : 'opacity-0'
-                }`}
-                onLoad={() => setImageLoaded(true)}
+                className={`w-full h-full object-contain`}
                 style={{
-                  maxWidth: '100%',
-                  maxHeight: '100%',
-                  width: 'auto',
-                  height: 'auto'
+                  opacity: imageLoaded ? '1' : '0',
+                  display: imageLoaded ? 'block' : 'none'
+                }}
+                onLoad={() => setImageLoaded(true)}
+                onError={() => {
+                  // Hide this image and fall through to show banner version
+                  const container = document.getElementById('banner-fallback');
+                  if (container) {
+                    container.style.display = 'block';
+                  }
+                  setImageLoaded(true);
                 }}
               />
+              
+              {/* Fallback to banner version if composite fails */}
+              <div 
+                id="banner-fallback" 
+                className="w-full h-full"
+                style={{ display: 'none' }}
+              >
+                <ImageWithBanner
+                  src={imageSrc}
+                  alt={imageAlt}
+                  fill
+                  className="object-contain"
+                  showBanner={true}
+                  priority
+                  sizes="100vw"
+                />
+              </div>
             </>
           ) : showBanner ? (
-            <div className="relative" style={{ width: '800px', height: '800px', maxWidth: '100%', maxHeight: '100%' }}>
+            <div className="relative w-full h-full" onLoad={() => setImageLoaded(true)}>
               <ImageWithBanner
                 src={imageSrc}
                 alt={imageAlt}
                 fill
-                className={`rounded-lg shadow-2xl transition-opacity duration-300 ${
-                  imageLoaded ? 'opacity-100' : 'opacity-0'
-                }`}
+                className="object-contain"
                 showBanner={true}
                 priority
                 sizes="100vw"
               />
             </div>
           ) : (
-            <Image
+            <img
               src={imageSrc}
               alt={imageAlt}
-              width={800}
-              height={800}
-              className={`max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-opacity duration-300 ${
+              className={`w-full h-full object-contain transition-opacity duration-300 ${
                 imageLoaded ? 'opacity-100' : 'opacity-0'
               }`}
               onLoad={() => setImageLoaded(true)}
-              priority
-              sizes="100vw"
-              style={{
-                maxWidth: '100%',
-                maxHeight: '100%',
-                width: 'auto',
-                height: 'auto'
-              }}
             />
           )}
         </div>

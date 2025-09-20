@@ -43,6 +43,9 @@ export default function StaticCharacterView({ character }: StaticCharacterViewPr
   
   // Helper to get the original image URL
   const getOriginalImageUrl = () => {
+    // Only return URLs that are explicitly stored, don't construct them
+    // This prevents 500 errors from non-existent URLs
+    
     // First, check if it's explicitly stored in generation_params
     if (character.generation_params?.original_image_url) {
       return character.generation_params.original_image_url;
@@ -53,13 +56,9 @@ export default function StaticCharacterView({ character }: StaticCharacterViewPr
       return character.image.file_url;
     }
     
-    // Third, try to construct it from the storage bucket pattern
-    // The original images are stored as {characterId}/uploaded-original.png
-    // But for anonymous users, it might be anon-TIMESTAMP-{characterId}/TIMESTAMP.webp
-    const supabaseUrl = 'https://iwazmzjqbdnxvzqvuimt.supabase.co';
-    
-    // Try the standard pattern first
-    return `${supabaseUrl}/storage/v1/object/public/roast-me-ai/${character.id}/uploaded-original.png`;
+    // Return empty string if no original image is found
+    // This will prevent the composite API from being called
+    return '';
   };
 
   const originalImageUrl = getOriginalImageUrl();
@@ -231,8 +230,12 @@ export default function StaticCharacterView({ character }: StaticCharacterViewPr
                     {character.likes || 0}
                   </span>
                 </div>
-                <span className="text-xs text-gray-500">
-                  {new Date(character.created_at).toLocaleDateString()}
+                <span className="text-xs text-gray-500" suppressHydrationWarning>
+                  {new Date(character.created_at).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric',
+                    timeZone: 'UTC'
+                  })}
                 </span>
               </div>
 

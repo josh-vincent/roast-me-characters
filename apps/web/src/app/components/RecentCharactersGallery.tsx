@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { CharacterCard } from './CharacterCard';
+import { UnifiedCharacterDisplay } from './UnifiedCharacterDisplay';
 
 interface Character {
   id: string;
@@ -61,7 +61,12 @@ export function RecentCharactersGallery({ initialCharacters }: RecentCharactersG
         {/* Instagram-style grid: 1 column on mobile, 2 on sm, 3 on md, 4 on lg */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
           {initialCharacters.map((character) => (
-            <CharacterCard key={character.id} character={character} />
+            <UnifiedCharacterDisplay 
+              key={character.id} 
+              character={character} 
+              variant="card"
+              showActions={true}
+            />
           ))}
         </div>
 
