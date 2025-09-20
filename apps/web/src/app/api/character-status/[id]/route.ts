@@ -10,7 +10,7 @@ export async function GET(
     const supabase = await createClient();
     
     const { data: character, error } = await supabase
-      .from('characters')
+      .from('roast_me_ai_characters')
       .select(`
         *,
         image:image_id (

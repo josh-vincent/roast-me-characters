@@ -1,5 +1,4 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { createXai } from '@ai-sdk/xai';
 import { generateObject, generateText } from 'ai';
 import { z } from 'zod';
 import type { AIFeature } from '@roast-me/types';
@@ -7,11 +6,6 @@ import type { AIFeature } from '@roast-me/types';
 // Configure Google Generative AI for Gemini
 const google = createGoogleGenerativeAI({
   apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || '',
-});
-
-// Configure xAI for Grok
-const xai = createXai({
-  apiKey: process.env.XAI_API_KEY || '',
 });
 
 const FeatureAnalysisSchema = z.object({
@@ -147,7 +141,7 @@ export async function generateRoast(
       .join(', ');
 
     const result = await generateObject({
-      model: xai('grok-beta') as any,
+      model: google('gemini-1.5-flash') as any, // Using Gemini 1.5 Flash for roast generation (faster and cheaper)
       schema: RoastSchema,
       messages: [
         {

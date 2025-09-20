@@ -26,7 +26,7 @@ export async function generateStaticParams() {
     
     // Get the 20 most popular characters to pre-render
     const { data: characters } = await supabase
-      .from('characters')
+      .from('roast_me_ai_characters')
       .select('seo_slug')
       .eq('public', true)
       .not('model_url', 'is', null)

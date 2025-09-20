@@ -91,7 +91,7 @@ export async function generateCharacter(formData: FormData): Promise<CharacterGe
     }
 
     const { error: insertError } = await supabase
-      .from('characters')
+      .from('roast_me_ai_characters')
       .insert(characterData)
     
     if (insertError) {
@@ -122,7 +122,7 @@ export async function retryCharacterGeneration(characterId: string): Promise<Cha
     
     // Get character data
     const { data: character, error: fetchError } = await supabase
-      .from('characters')
+      .from('roast_me_ai_characters')
       .select('*')
       .eq('id', characterId)
       .single()
@@ -150,7 +150,7 @@ export async function retryCharacterGeneration(characterId: string): Promise<Cha
 
     // Update database
     const { error: updateError } = await supabase
-      .from('characters')
+      .from('roast_me_ai_characters')
       .update({
         generated_image_url: generatedUrl,
         generation_params: {
@@ -179,7 +179,7 @@ export async function getRecentCharacters() {
     const supabase = await createClient()
     
     const { data: characters, error } = await supabase
-      .from('characters')
+      .from('roast_me_ai_characters')
       .select('*')
       .eq('public', true)
       .not('generated_image_url', 'is', null)
@@ -224,7 +224,7 @@ async function generateCharacterImageAsync(
     if (generatedUrl) {
       // Update the character with the generated image
       await supabase
-        .from('characters')
+        .from('roast_me_ai_characters')
         .update({
           generated_image_url: generatedUrl,
           generation_params: {
@@ -240,7 +240,7 @@ async function generateCharacterImageAsync(
     // Update status to failed
     const supabase = await createClient()
     await supabase
-      .from('characters')
+      .from('roast_me_ai_characters')
       .update({
         generation_params: {
           status: 'failed',

@@ -12,7 +12,7 @@ export default async function GenerationPage({ params }: PageProps) {
   // Verify the character exists and is still generating
   const supabase = await createClient();
   const { data: character, error } = await supabase
-    .from('characters')
+    .from('roast_me_ai_characters')
     .select('*')
     .eq('id', id)
     .single();
