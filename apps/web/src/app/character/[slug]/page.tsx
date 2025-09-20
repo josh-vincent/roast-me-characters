@@ -91,21 +91,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     } else {
       baseUrl = 'http://localhost:3000';
     }
-    const ogImageUrl = new URL('/api/og', baseUrl);
-    
-    // Use the correct field names from the database
-    if (character.original_image_url) {
-      ogImageUrl.searchParams.set('original', character.original_image_url);
-    }
-    if (character.generated_image_url) {
-      ogImageUrl.searchParams.set('generated', character.generated_image_url);
-    }
-    ogImageUrl.searchParams.set('title', title);
-    if (character.generation_params?.roast_content?.punchline) {
-      ogImageUrl.searchParams.set('punchline', character.generation_params.roast_content.punchline);
-    }
-    if (character.features && character.features.length > 0) {
-      ogImageUrl.searchParams.set('features', character.features.map((f: any) => f.feature_name).join(','));
+    // Use composite OG URL if available, otherwise build it
+    let ogImageUrlString = '';
+    if (character.generation_params?.composite_og_url && character.generated_image_url) {
+      // Use the pre-generated composite URL once AI image is ready
+      ogImageUrlString = character.generation_params.composite_og_url;
+    } else {
+      // Build URL for images (no title/punchline for clean design)
+      const ogImageUrl = new URL('/api/og', baseUrl);
+      if (character.original_image_url) {
+        ogImageUrl.searchParams.set('original', character.original_image_url);
+      }
+      if (character.generated_image_url) {
+        ogImageUrl.searchParams.set('generated', character.generated_image_url);
+      }
+      ogImageUrlString = ogImageUrl.toString();
     }
 
     return {
@@ -145,12 +145,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         ] : ['AI Art', 'Character Generator'],
         images: [
           {
-            url: ogImageUrl.toString(),
+            url: ogImageUrlString,
             width: 1200,
             height: 630,
             alt: `${title} - Hilarious AI Roast Character`,
             type: 'image/png',
-            secureUrl: ogImageUrl.toString(),
+            secureUrl: ogImageUrlString,
           },
         ],
       },
@@ -158,7 +158,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         card: 'summary_large_image',
         title: title.length > 70 ? title.substring(0, 67) + '...' : title,
         description: description.length > 200 ? description.substring(0, 197) + '...' : description,
-        images: [ogImageUrl.toString()],
+        images: [ogImageUrlString],
         creator: '@roastme_chars',
         site: '@roastme_chars',
       },
@@ -166,7 +166,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       other: {
         'og:image:width': '1200',
         'og:image:height': '630',
-        'og:image:secure_url': ogImageUrl.toString(),
+        'og:image:secure_url': ogImageUrlString,
         'og:video': character.model_url || '',
         'article:author': 'Roast Me Characters',
         'article:published_time': character.created_at,

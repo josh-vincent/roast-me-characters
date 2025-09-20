@@ -268,7 +268,14 @@ async function generateCharacterImageAsync(
     const generatedUrl = result?.original || null
     
     if (generatedUrl) {
-      // Update the character with the generated image
+      // Create composite OG URL for sharing (without title/punchline for clean design)
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://roastme.tocld.com'
+      const ogImageUrl = new URL('/api/og', baseUrl)
+      ogImageUrl.searchParams.set('original', originalUrl)
+      ogImageUrl.searchParams.set('generated', generatedUrl)
+      const compositeOgUrl = ogImageUrl.toString()
+      
+      // Update the character with the generated image AND composite OG URL
       await supabase
         .from('roast_me_ai_characters')
         .update({
@@ -276,7 +283,8 @@ async function generateCharacterImageAsync(
           generation_params: {
             ...analysis,
             roast_content: roastContent,
-            status: 'completed'
+            status: 'completed',
+            composite_og_url: compositeOgUrl
           }
         })
         .eq('id', characterId)
