@@ -156,13 +156,14 @@ export async function retryCharacterGeneration(characterId: string): Promise<Cha
       return { success: false, error: 'Failed to generate character image' }
     }
 
-    // Update database
+    // Update database - preserve original_image_url
     const { error: updateError } = await supabase
       .from('roast_me_ai_characters')
       .update({
         model_url: generatedUrl,
         generation_params: {
           ...params,
+          original_image_url: params.original_image_url, // Preserve original image URL
           status: 'completed'
         }
       })
@@ -290,6 +291,7 @@ async function generateCharacterImageAsync(
       const compositeOgUrl = ogImageUrl.toString()
       
       // Update the character with the generated image AND composite OG URL
+      // IMPORTANT: Preserve the original_image_url when updating
       await supabase
         .from('roast_me_ai_characters')
         .update({
@@ -297,6 +299,7 @@ async function generateCharacterImageAsync(
           generation_params: {
             ...analysis,
             roast_content: roastContent,
+            original_image_url: originalUrl, // Keep the original image URL
             status: 'completed',
             composite_og_url: compositeOgUrl
           }
