@@ -17,6 +17,14 @@ export function Header() {
           </div>
           
           <nav className="flex items-center space-x-4">
+            {/* Gallery Link */}
+            <Link 
+              href="/gallery" 
+              className="text-gray-700 hover:text-purple-600 px-3 py-2 text-sm font-medium transition-colors"
+            >
+              {user ? 'My Gallery' : 'Gallery'}
+            </Link>
+            
             {/* Credits Display */}
             {!loading && (
               <div className="hidden sm:flex items-center space-x-3">

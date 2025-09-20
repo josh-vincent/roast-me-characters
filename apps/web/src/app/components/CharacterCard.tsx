@@ -16,6 +16,7 @@ interface Character {
   view_count?: number;
   likes?: number;
   created_at: string;
+  is_public?: boolean;
   generation_params?: {
     status?: 'generating' | 'completed' | 'failed';
     style?: string;
@@ -36,9 +37,10 @@ interface Character {
 
 interface CharacterCardProps {
   character: Character;
+  showPrivacyBadge?: boolean;
 }
 
-export function CharacterCard({ character }: CharacterCardProps) {
+export function CharacterCard({ character, showPrivacyBadge = false }: CharacterCardProps) {
   const [isFullScreenOpen, setIsFullScreenOpen] = useState(false);
   const isGenerating = character.generation_params?.status === 'generating';
   const isFailed = character.generation_params?.status === 'failed';
@@ -51,7 +53,20 @@ export function CharacterCard({ character }: CharacterCardProps) {
 
   return (
     <>
-      <div className="group block bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-purple-200 transition-all duration-200 hover:scale-105">
+      <div className="group block bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-purple-200 transition-all duration-200 hover:scale-105 relative">
+        
+        {/* Privacy Badge */}
+        {showPrivacyBadge && (
+          <div className="absolute top-2 right-2 z-10">
+            <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+              character.is_public 
+                ? 'bg-green-100 text-green-700' 
+                : 'bg-gray-100 text-gray-700'
+            }`}>
+              {character.is_public ? '🌍 Public' : '🔒 Private'}
+            </div>
+          </div>
+        )}
         
         {/* Character Image */}
         <div 
