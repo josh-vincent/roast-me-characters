@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ImageWithBanner } from './ImageWithBanner';
+import { FullScreenImageModal } from './FullScreenImageModal';
 
 interface Character {
   id: string;
@@ -37,15 +39,25 @@ interface CharacterCardProps {
 }
 
 export function CharacterCard({ character }: CharacterCardProps) {
+  const [isFullScreenOpen, setIsFullScreenOpen] = useState(false);
   const isGenerating = character.generation_params?.status === 'generating';
   const isFailed = character.generation_params?.status === 'failed';
   
+  const handleImageClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsFullScreenOpen(true);
+  };
+
   return (
-    <Link href={`/character/${character.seo_slug}`} className="group block">
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-purple-200 transition-all duration-200 group-hover:scale-105">
+    <>
+      <div className="group block bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-purple-200 transition-all duration-200 hover:scale-105">
         
         {/* Character Image */}
-        <div className="aspect-square bg-gradient-to-b from-purple-50 to-blue-50 relative overflow-hidden">
+        <div 
+          className="aspect-square bg-gradient-to-b from-purple-50 to-blue-50 relative overflow-hidden cursor-pointer"
+          onClick={character.model_url ? handleImageClick : undefined}
+        >
           {isGenerating ? (
             // Generating state
             <div className="absolute inset-0 flex items-center justify-center">
@@ -68,7 +80,7 @@ export function CharacterCard({ character }: CharacterCardProps) {
             // Completed with image - show generated image as main, original as overlay
             <div className="relative w-full h-full">
               <ImageWithBanner
-                src={character.thumbnail_url || character.model_url}
+                src={character.thumbnail_url || character.medium_url || character.model_url}
                 alt={character.generation_params?.roast_content 
                   ? `${character.generation_params.roast_content.title} - ${character.generation_params.roast_content.figurine_name}`
                   : character.og_title || 'Generated character'}
@@ -77,6 +89,7 @@ export function CharacterCard({ character }: CharacterCardProps) {
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 showBanner={true}
                 bannerText="roastme.tocld.com"
+                priority={false}
               />
               
               {/* Original Image Overlay - Bottom Left, smaller size for cards */}
@@ -137,7 +150,8 @@ export function CharacterCard({ character }: CharacterCardProps) {
         </div>
 
         {/* Character Info */}
-        <div className="p-4">
+        <Link href={`/character/${character.seo_slug}`}>
+          <div className="p-4 hover:bg-gray-50 transition-colors">
           <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-purple-600 transition-colors">
             {character.generation_params?.roast_content?.title || character.og_title || `Roast Character`}
           </h3>
@@ -208,8 +222,22 @@ export function CharacterCard({ character }: CharacterCardProps) {
               })}
             </span>
           </div>
-        </div>
+          </div>
+        </Link>
       </div>
-    </Link>
+
+      {/* Full Screen Image Modal - Use full resolution model_url */}
+      {character.model_url && (
+        <FullScreenImageModal
+          isOpen={isFullScreenOpen}
+          onClose={() => setIsFullScreenOpen(false)}
+          imageSrc={character.model_url} // Always use full resolution for modal
+          imageAlt={character.generation_params?.roast_content 
+            ? `${character.generation_params.roast_content.title} - ${character.generation_params.roast_content.punchline}`
+            : character.og_title || 'Generated character'}
+          title={character.generation_params?.roast_content?.title || character.og_title}
+        />
+      )}
+    </>
   );
 }

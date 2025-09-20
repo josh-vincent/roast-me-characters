@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
   const originalImage = searchParams.get('original');
   const generatedImage = searchParams.get('generated');
   const title = searchParams.get('title') || 'AI Character';
+  const punchline = searchParams.get('punchline');
   const features = searchParams.get('features')?.split(',') || [];
 
   return new ImageResponse(
@@ -29,6 +30,7 @@ export async function GET(request: NextRequest) {
         {/* Title */}
         <div
           style={{
+            display: 'flex',
             fontSize: '48px',
             fontWeight: 'bold',
             color: '#1f2937',
@@ -58,6 +60,7 @@ export async function GET(request: NextRequest) {
           >
             <div
               style={{
+                display: 'flex',
                 fontSize: '24px',
                 fontWeight: 'bold',
                 color: '#374151',
@@ -88,7 +91,7 @@ export async function GET(request: NextRequest) {
                   style={{ objectFit: 'cover' }}
                 />
               ) : (
-                <div style={{ fontSize: '60px' }}>📷</div>
+                <div style={{ display: 'flex', fontSize: '60px' }}>📷</div>
               )}
             </div>
           </div>
@@ -115,6 +118,7 @@ export async function GET(request: NextRequest) {
           >
             <div
               style={{
+                display: 'flex',
                 fontSize: '24px',
                 fontWeight: 'bold',
                 color: '#374151',
@@ -145,16 +149,32 @@ export async function GET(request: NextRequest) {
                   style={{ objectFit: 'cover' }}
                 />
               ) : (
-                <div style={{ fontSize: '60px' }}>🎭</div>
+                <div style={{ display: 'flex', fontSize: '60px' }}>🎭</div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Features */}
-        {features.length > 0 && (
+        {/* Punchline or Features */}
+        {punchline ? (
           <div
             style={{
+              display: 'flex',
+              fontSize: '22px',
+              color: '#dc2626',
+              textAlign: 'center',
+              marginTop: '40px',
+              fontStyle: 'italic',
+              maxWidth: '800px',
+              padding: '0 20px',
+            }}
+          >
+            "{punchline}"
+          </div>
+        ) : features.length > 0 ? (
+          <div
+            style={{
+              display: 'flex',
               fontSize: '20px',
               color: '#6b7280',
               textAlign: 'center',
@@ -163,7 +183,7 @@ export async function GET(request: NextRequest) {
           >
             {features.slice(0, 3).join(' • ')}
           </div>
-        )}
+        ) : null}
 
         {/* Watermark */}
         <div
@@ -173,9 +193,13 @@ export async function GET(request: NextRequest) {
             right: '20px',
             fontSize: '16px',
             color: '#9ca3af',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
           }}
         >
-          roast-me-characters.com
+          <span style={{ display: 'flex', fontSize: '20px' }}>🔥</span>
+          <span style={{ display: 'flex' }}>roastme.tocld.com</span>
         </div>
       </div>
     ),

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export function MobileAppWaitlist() {
-  const { user, userProfile } = useAuth();
+  const { user } = useAuth();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -12,10 +12,10 @@ export function MobileAppWaitlist() {
   
   // Auto-populate email for authenticated users
   useEffect(() => {
-    if (user?.email && !userProfile?.is_anonymous) {
+    if (user?.email) {
       setEmail(user.email);
     }
-  }, [user?.email, userProfile?.is_anonymous]);
+  }, [user?.email]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,7 +81,7 @@ export function MobileAppWaitlist() {
             Get ready to create hilarious roast figurines on the go! Be the first to know when our mobile app launches.
           </p>
           
-          {user?.email && !userProfile?.is_anonymous ? (
+          {user?.email ? (
             // Authenticated user - show full-width button without input
             <form onSubmit={handleSubmit} className="max-w-lg mx-auto">
               <div className="text-center">

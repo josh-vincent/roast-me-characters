@@ -1,0 +1,75 @@
+# Multi-stage build for Next.js application with pnpm workspace
+FROM node:20-alpine AS base
+
+# Install dependencies only when needed
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
+RUN npm install -g pnpm@9.0.0
+WORKDIR /app
+
+# Copy workspace configuration and package files
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY packages packages
+COPY apps/web/package.json apps/web/package.json
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Rebuild the source code only when needed
+FROM base AS builder
+RUN npm install -g pnpm@9.0.0
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages ./packages
+COPY . .
+
+# Create environment variables for build (will be overridden by K8s secrets at runtime)
+ENV NEXT_PUBLIC_SUPABASE_URL=https://xpndmfhitpkbzhinfprf.supabase.co
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhwbmRtZmhpdHBrYnpoaW5mcHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1MDE1NjksImV4cCI6MjA3MzA3NzU2OX0.NmYR4G-Zoo3iaGj-EJ3TE4-3a8Z2rBmVRSiFfkhcQ00
+ENV SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhwbmRtZmhpdHBrYnpoaW5mcHJmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NzUwMTU2OSwiZXhwIjoyMDczMDc3NTY5fQ.khSVreQh9Y-ryaZt7HJrxGX04UHp990Nhl73DGWHgNg
+ENV GOOGLE_GENERATIVE_AI_API_KEY=AIzaSyAm9eJFX1FfepqEUrFD_YrEOPCkv3y0Jes
+ENV AI_GATEWAY_API_KEY=vck_7D6D4rnj530kXvp4miAt9GpldTxpRaClvyzcOqHURjiqYW3rlZ0BAzZ1
+ENV NEXT_PUBLIC_APP_URL=https://roastme.tocld.com
+
+# Set build environment variables
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
+
+# Build the application
+RUN pnpm build
+
+# Production image, copy all the files and run next
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Optimize Node.js settings for file handling
+ENV UV_THREADPOOL_SIZE=32
+ENV NODE_OPTIONS="--max-old-space-size=512 --max_semi_space_size=128"
+ENV NODE_ENV=production
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/apps/web/public ./public
+
+# Set the correct permission for prerender cache
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
+
+# Automatically leverage output traces to reduce image size  
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+# server.js is created by next build from the standalone output  
+CMD ["node", "apps/web/server.js"]

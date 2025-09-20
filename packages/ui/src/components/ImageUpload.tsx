@@ -2,6 +2,32 @@ import React, { useState, useCallback } from 'react';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import { clsx } from 'clsx';
 
+// Helper function to handle image orientation
+const createImageWithOrientation = (file: File): Promise<string> => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas dimensions to image dimensions
+        canvas.width = img.width;
+        canvas.height = img.height;
+        
+        // Draw the image onto the canvas (this automatically handles most orientation issues)
+        ctx?.drawImage(img, 0, 0);
+        
+        // Convert canvas to data URL
+        resolve(canvas.toDataURL('image/jpeg', 0.9));
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+};
+
 interface ImageUploadProps {
   onUpload: (file: File) => void;
   isLoading?: boolean;
@@ -14,7 +40,7 @@ export function ImageUpload({
   onUpload,
   isLoading = false,
   maxSize = 10 * 1024 * 1024, // 10MB default
-  acceptedTypes = ['image/jpeg', 'image/png', 'image/webp'],
+  acceptedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'],
   className,
 }: ImageUploadProps) {
   const [preview, setPreview] = useState<string | null>(null);
@@ -33,15 +59,24 @@ export function ImageUpload({
     return true;
   };
 
-  const handleFile = useCallback((file: File) => {
+  const handleFile = useCallback(async (file: File) => {
     if (!validateFile(file)) return;
 
     setError(null);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    
+    try {
+      // Handle image orientation for preview
+      const orientedPreview = await createImageWithOrientation(file);
+      setPreview(orientedPreview);
+    } catch (error) {
+      // Fallback to basic preview if orientation handling fails
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+    
     onUpload(file);
   }, [onUpload, maxSize, acceptedTypes]);
 
@@ -133,7 +168,7 @@ export function ImageUpload({
               <span className="font-semibold">Click to upload</span> or drag and drop
             </p>
             <p className="text-xs text-gray-500">
-              PNG, JPG or WebP (MAX. {maxSize / 1024 / 1024}MB)
+              PNG, JPG, WebP, or HEIC (MAX. {maxSize / 1024 / 1024}MB)
             </p>
           </div>
           <input
@@ -142,6 +177,7 @@ export function ImageUpload({
             accept={acceptedTypes.join(',')}
             onChange={handleFileSelect}
             disabled={isLoading}
+            multiple={false}
           />
         </label>
       )}

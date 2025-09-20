@@ -284,7 +284,7 @@ export function createBeforeAfterComposite(
   originalImageUrl: string,
   generatedImageUrl: string,
   metadata: { title: string; features: string[] },
-  baseUrl: string = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+  baseUrl: string = process.env.NEXT_PUBLIC_API_URL || 'https://roastme.tocld.com'
 ): string {
   try {
     const params = new URLSearchParams({

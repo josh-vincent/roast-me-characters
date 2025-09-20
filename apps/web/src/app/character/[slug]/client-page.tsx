@@ -2,15 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { LoadingSpinner, downloadImageWithBanner, shareImageWithBanner } from '@roast-me/ui';
-import { ImageWithBanner } from '../../components/ImageWithBanner';
+import { LoadingSpinner, downloadImageWithBanner, shareCharacterUrl } from '@roast-me/ui';
 import { ProgressiveImageWithBanner } from '../../components/ProgressiveImageWithBanner';
+import { FullScreenImageModal } from '../../components/FullScreenImageModal';
 import { getCharacterData } from './actions';
-import { retryCharacterGenerationAction } from '../../actions/retry-generation';
+import { retryCharacterGeneration } from '../../actions/character-actions';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Character {
   id: string;
+  seo_slug?: string;
   og_title?: string;
   og_description?: string;
   og_image_url?: string;
@@ -45,16 +46,19 @@ interface Character {
 
 interface CharacterPageClientProps {
   slug: string;
+  initialCharacter?: Character | null;
+  initialError?: string;
 }
 
-export default function CharacterPageClient({ slug }: CharacterPageClientProps) {
-  const { user, userProfile, signInWithGoogle } = useAuth();
-  const [character, setCharacter] = useState<Character | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export default function CharacterPageClient({ slug, initialCharacter, initialError }: CharacterPageClientProps) {
+  const { user, signInWithGoogle } = useAuth();
+  const [character, setCharacter] = useState<Character | null>(initialCharacter || null);
+  const [loading, setLoading] = useState(!initialCharacter && !initialError);
+  const [error, setError] = useState<string | null>(initialError || null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
   const [retryError, setRetryError] = useState<string | null>(null);
+  const [isFullScreenOpen, setIsFullScreenOpen] = useState(false);
 
   // Fetch character data
   const fetchCharacter = async () => {
@@ -89,8 +93,26 @@ export default function CharacterPageClient({ slug }: CharacterPageClientProps) 
   };
 
   useEffect(() => {
-    fetchCharacter();
+    // Only fetch if we don't have initial data (client-side navigation)
+    if (!initialCharacter && !initialError) {
+      fetchCharacter();
+    }
   }, [slug]);
+
+  useEffect(() => {
+    // Check if character is still generating and needs polling
+    if (character) {
+      const status = character.generation_params?.status;
+      if (status === 'generating' || status === 'retrying') {
+        setIsGenerating(true);
+        // Start polling for updates
+        const timer = setTimeout(fetchCharacter, 3000);
+        return () => clearTimeout(timer);
+      } else {
+        setIsGenerating(false);
+      }
+    }
+  }, [character?.generation_params?.status]);
 
   // Retry character generation
   const handleRetry = async () => {
@@ -100,10 +122,10 @@ export default function CharacterPageClient({ slug }: CharacterPageClientProps) 
     setRetryError(null);
     
     try {
-      const result = await retryCharacterGenerationAction(character.id);
+      const result = await retryCharacterGeneration(character.id);
       
-      if (result.error) {
-        setRetryError(result.error);
+      if (!result.success) {
+        setRetryError(result.error || 'Failed to retry generation');
       } else {
         // Refresh character data after successful retry
         await fetchCharacter();
@@ -166,10 +188,9 @@ export default function CharacterPageClient({ slug }: CharacterPageClientProps) 
             <div className="flex items-center space-x-3">
               <button 
                 className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-                onClick={() => shareImageWithBanner(
-                  character.model_url || character.medium_url || '',
-                  character.og_title || 'Check out my AI Roast Character!',
-                  character.og_description || 'Created at roastme.tocld.com'
+                onClick={() => shareCharacterUrl(
+                  character.seo_slug,
+                  character.og_title || 'Check out my AI Roast Character!'
                 )}
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -224,7 +245,6 @@ export default function CharacterPageClient({ slug }: CharacterPageClientProps) 
             <div className="border-b border-gray-100 px-4 sm:px-6 py-4">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
                 <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                  <h2 className="text-lg font-semibold text-gray-900 truncate">Roast Figurine Preview</h2>
                   <div className="flex items-center space-x-3 text-sm text-gray-500">
                     <span className="flex items-center">
                       <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -262,7 +282,6 @@ export default function CharacterPageClient({ slug }: CharacterPageClientProps) 
                 {/* AI Generated Character - Shows first on mobile, second on desktop */}
                 <div className="space-y-4 lg:order-2">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">Roast Caricature</h3>
                     <div className={`text-xs px-2 py-1 rounded-full font-medium ${
                       isGenerating || character.generation_params?.status === 'retrying' 
                         ? 'text-blue-600 bg-blue-100' 
@@ -304,10 +323,10 @@ export default function CharacterPageClient({ slug }: CharacterPageClientProps) 
                         </div>
                       </div>
                     ) : character.model_url ? (
-                      <div className="relative w-full h-full group">
+                      <div className="relative w-full h-full group cursor-pointer" onClick={() => setIsFullScreenOpen(true)}>
                         <ProgressiveImageWithBanner
                           lowResSrc={character.thumbnail_url}
-                          highResSrc={character.model_url || character.medium_url || ''}
+                          highResSrc={character.medium_url || character.model_url || ''}
                           alt={character.generation_params?.roast_content 
                             ? `${character.generation_params.roast_content.title} - ${character.generation_params.roast_content.roast_text}`
                             : character.generation_params?.og_image_alt || 'Hilarious roast caricature figurine'}
@@ -316,6 +335,15 @@ export default function CharacterPageClient({ slug }: CharacterPageClientProps) 
                           bannerText="roastme.tocld.com"
                           priority={true}
                         />
+                        
+                        {/* Click to expand overlay */}
+                        <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                          <div className="bg-black/70 backdrop-blur-sm rounded-full p-3">
+                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                            </svg>
+                          </div>
+                        </div>
                         
                         {/* Original Image Overlay - Bottom Left, 1/8 size */}
                         {character.image?.file_url && (
@@ -447,10 +475,9 @@ export default function CharacterPageClient({ slug }: CharacterPageClientProps) 
                             </p>
                             <button 
                               className="inline-flex items-center justify-center px-3 py-2 text-xs sm:text-sm font-medium text-orange-700 bg-orange-100 border border-orange-300 rounded-lg hover:bg-orange-200 transition-colors whitespace-nowrap flex-shrink-0"
-                              onClick={() => shareImageWithBanner(
-                                character.model_url || character.medium_url || '',
-                                character.og_title || 'Check out my AI Roast Character!',
-                                character.og_description || 'Created at roastme.tocld.com'
+                              onClick={() => shareCharacterUrl(
+                                character.seo_slug,
+                                character.og_title || 'Check out my AI Roast Character!'
                               )}
                             >
                               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -469,10 +496,9 @@ export default function CharacterPageClient({ slug }: CharacterPageClientProps) 
                     <div className="mt-4">
                       <button 
                         className="w-full inline-flex items-center justify-center px-4 py-3 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-orange-500 hover:from-purple-700 hover:to-orange-600 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
-                        onClick={() => shareImageWithBanner(
-                          character.model_url || character.medium_url || '',
-                          character.og_title || 'Check out my AI Roast Character!',
-                          character.og_description || 'Created at roastme.tocld.com'
+                        onClick={() => shareCharacterUrl(
+                          character.seo_slug,
+                          character.og_title || 'Check out my AI Roast Character!'
                         )}
                       >
                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -487,7 +513,6 @@ export default function CharacterPageClient({ slug }: CharacterPageClientProps) 
                 {/* Original Image - Shows second on mobile, first on desktop */}
                 <div className="space-y-4 lg:order-1">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">Original</h3>
                     <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Input</div>
                   </div>
                   <div className="relative bg-gray-50 rounded-xl overflow-hidden aspect-square border-2 border-dashed border-gray-200">
@@ -517,8 +542,8 @@ export default function CharacterPageClient({ slug }: CharacterPageClientProps) 
             {/* Credits/Login Section */}
             <div className="border-t border-gray-100 px-4 sm:px-6 py-6 bg-gradient-to-r from-purple-50 to-orange-50">
               <div className="max-w-4xl mx-auto">
-                {userProfile ? (
-                  // Authenticated user - show credits
+                {user ? (
+                  // Authenticated user - encourage to create more
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
                     <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
                       <div className="flex items-center space-x-3">
@@ -526,39 +551,21 @@ export default function CharacterPageClient({ slug }: CharacterPageClientProps) 
                           <span className="text-purple-600 font-bold">🔥</span>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600">Your Credits</p>
-                          <p className="text-xl font-bold text-purple-600">{userProfile.credits}</p>
+                          <p className="text-sm text-gray-600">Create Your Own</p>
+                          <p className="text-xl font-bold text-purple-600">Roast Character</p>
                         </div>
                       </div>
-                      {userProfile.is_anonymous && (
-                        <div className="flex items-start space-x-3 bg-blue-50 px-4 py-3 rounded-lg border border-blue-200">
-                          <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <div>
-                            <p className="text-blue-900 font-medium text-sm">Save your progress</p>
-                            <button
-                              onClick={() => signInWithGoogle()}
-                              className="text-blue-700 hover:text-blue-800 text-sm font-medium"
-                            >
-                              Sign in to keep credits
-                            </button>
-                          </div>
-                        </div>
-                      )}
                     </div>
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
-                      {userProfile.credits <= 1 && (
-                        <a 
-                          href="/credits"
-                          className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-orange-500 hover:from-purple-700 hover:to-orange-600 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
-                        >
-                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                          </svg>
-                          Get More Credits
-                        </a>
-                      )}
+                      <a 
+                        href="/credits"
+                        className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-orange-500 hover:from-purple-700 hover:to-orange-600 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+                      >
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Get More Credits
+                      </a>
                       <a 
                         href="/"
                         className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-purple-700 bg-white border border-purple-300 rounded-lg hover:bg-purple-50 transition-colors"
@@ -639,6 +646,29 @@ export default function CharacterPageClient({ slug }: CharacterPageClientProps) 
 
         </div>
       </div>
+
+      {/* Full Screen Image Modal */}
+      {character?.model_url && (
+        <FullScreenImageModal
+          isOpen={isFullScreenOpen}
+          onClose={() => setIsFullScreenOpen(false)}
+          imageSrc={character.model_url}
+          imageAlt={character.generation_params?.roast_content 
+            ? `${character.generation_params.roast_content.title} - ${character.generation_params.roast_content.roast_text}`
+            : character.generation_params?.og_image_alt || 'Hilarious roast caricature figurine'}
+          title={character.generation_params?.roast_content?.title || character.og_title}
+          onDownload={() => character.model_url && downloadImageWithBanner(
+            character.model_url,
+            character.generation_params?.roast_content?.figurine_name 
+              ? `${character.generation_params.roast_content.figurine_name.replace(/[^a-zA-Z0-9]/g, '-')}.png`
+              : 'roast-character.png'
+          )}
+          onShare={() => shareCharacterUrl(
+            character.seo_slug,
+            character.og_title || 'Check out my AI Roast Character!'
+          )}
+        />
+      )}
     </main>
   );
 }

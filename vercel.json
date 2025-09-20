@@ -1,0 +1,40 @@
+{
+  "functions": {
+    "apps/web/src/app/api/generate-roast/route.ts": {
+      "maxDuration": 30
+    },
+    "apps/web/src/app/generate/[id]/page.tsx": {
+      "maxDuration": 10
+    }
+  },
+  "images": {
+    "domains": ["xpndmfhitpkbzhinfprf.supabase.co"],
+    "minimumCacheTTL": 604800
+  },
+  "headers": [
+    {
+      "source": "/api/og",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, s-maxage=86400, stale-while-revalidate=86400"
+        }
+      ]
+    },
+    {
+      "source": "/_next/image(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800, s-maxage=604800, stale-while-revalidate=86400"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    }
+  ]
+}

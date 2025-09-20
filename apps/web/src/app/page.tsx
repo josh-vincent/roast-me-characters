@@ -2,6 +2,10 @@ import { getRecentCharactersAction } from './actions/get-recent-characters';
 import { CharacterUploadSection } from './components/CharacterUploadSection';
 import { RecentCharactersGallery } from './components/RecentCharactersGallery';
 import { MobileAppWaitlist } from './components/MobileAppWaitlist';
+import { Header } from './components/Header';
+
+// Enable ISR for the homepage - revalidate every 5 minutes
+export const revalidate = 300;
 
 export default async function HomePage() {
   // Fetch recent characters on server
@@ -11,31 +15,18 @@ export default async function HomePage() {
   return (
     <main className="min-h-screen  bg-white">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">🔥 Roast Me</h1>
-            </div>
-            <nav className="hidden md:flex space-x-8">
-              <a href="#" className="text-gray-500 hover:text-gray-900 px-3 py-2 text-sm font-medium">How it works</a>
-              <a href="#" className="text-gray-500 hover:text-gray-900 px-3 py-2 text-sm font-medium">Gallery</a>
-              <a href="#" className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">Get Started</a>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Hero Section */}
-      <div className="flex flex-col items-center overflow-hidden max-w-screen-lg mx-auto">
+      <div className="w-full overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 text-center lg:pt-32">
-          <h1 className="mx-auto max-w-4xl font-display text-5xl font-medium tracking-tight text-slate-900 sm:text-7xl">
+          <h1 className="mx-auto max-w-4xl font-display text-3xl sm:text-5xl lg:text-7xl font-medium tracking-tight text-slate-900">
             Transform your photos into
-            <span className="whitespace-nowrap text-orange-600 w-full">
+            <span className="text-orange-600 block sm:inline">
               <span className="relative"> hilarious 🔥 roast figurines</span>
             </span>
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg tracking-tight text-slate-700">
+          <p className="mx-auto mt-6 max-w-2xl text-base sm:text-lg tracking-tight text-slate-700">
             Upload any image and watch our AI create a hilariously exaggerated caricature figurine that playfully roasts your features. Get a premium collectible with comically oversized traits!
           </p>
         </div>

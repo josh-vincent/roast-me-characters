@@ -154,3 +154,76 @@ export async function shareImageWithBanner(
     alert('Link copied to clipboard! Share this URL to show your roast character.');
   }
 }
+
+export async function shareCharacterUrl(
+  characterSlug?: string,
+  title: string = 'Check out my AI Roast Character!',
+  showSuccessMessage: boolean = true
+): Promise<void> {
+  try {
+    // Construct the full character URL
+    const baseUrl = window.location.origin;
+    const url = characterSlug ? `${baseUrl}/character/${encodeURIComponent(characterSlug)}` : window.location.href;
+    
+    if (navigator.share && navigator.canShare({ url })) {
+      // Use native sharing if available
+      await navigator.share({
+        title,
+        url,
+      });
+      return;
+    }
+    
+    // Fallback: copy URL to clipboard
+    if (navigator.clipboard) {
+      await navigator.clipboard.writeText(url);
+    } else {
+      // Further fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = url;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+    }
+    
+    if (showSuccessMessage) {
+      // Show a more subtle success message
+      const message = 'Link copied to clipboard! 🔗';
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        new Notification(message);
+      } else {
+        // Create a temporary toast notification
+        const toast = document.createElement('div');
+        toast.textContent = message;
+        toast.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: #059669;
+          color: white;
+          padding: 12px 20px;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          z-index: 10000;
+          font-family: system-ui, -apple-system, sans-serif;
+          font-size: 14px;
+          font-weight: 500;
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+          if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+          }
+        }, 3000);
+      }
+    }
+    
+  } catch (error) {
+    console.error('Failed to share character URL:', error);
+    // Ultimate fallback
+    if (showSuccessMessage) {
+      alert('Unable to copy link. Please copy the URL from your browser.');
+    }
+  }
+}
