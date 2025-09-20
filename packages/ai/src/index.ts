@@ -9,11 +9,19 @@ const google = createGoogleGenerativeAI({
   apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || '',
 });
 
-// Configure Grok through AI Gateway (OpenAI-compatible endpoint)
+// Configure AI Gateway - can route to multiple providers including Grok
+// The AI Gateway acts as a proxy and handles provider-specific compatibility
+const aiGateway = createOpenAI({
+  baseURL: process.env.AI_GATEWAY_URL || 'https://gateway.ai.cloudflare.com/v1/ACCOUNT_ID/GATEWAY_ID/openai',
+  apiKey: process.env.AI_GATEWAY_API_KEY || '',
+  compatibility: 'compatible', // Use OpenAI compatibility mode
+});
+
+// Configure direct Grok access as fallback
 const grok = createOpenAI({
   baseURL: 'https://api.x.ai/v1', // xAI's OpenAI-compatible endpoint
-  apiKey: process.env.XAI_API_KEY || process.env.AI_GATEWAY_API_KEY || '',
-  compatibility: 'compatible', // Use OpenAI compatibility mode
+  apiKey: process.env.XAI_API_KEY || '',
+  compatibility: 'compatible',
 });
 
 const FeatureAnalysisSchema = z.object({
@@ -148,8 +156,23 @@ export async function generateRoast(
       .map(f => `${f.feature_name}: ${f.feature_value}`)
       .join(', ');
 
+    // Determine which provider to use based on available API keys
+    let model;
+    if (process.env.AI_GATEWAY_URL && process.env.AI_GATEWAY_API_KEY) {
+      // Use AI Gateway if configured (can route to Grok or other providers)
+      model = aiGateway('grok-beta'); // Request Grok through the gateway
+    } else if (process.env.XAI_API_KEY) {
+      // Direct Grok access if XAI API key is available
+      model = grok('grok-beta');
+    } else if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+      // Fallback to Gemini if no Grok access
+      model = google('gemini-1.5-flash');
+    } else {
+      throw new Error('No AI provider configured. Please set AI_GATEWAY_API_KEY, XAI_API_KEY, or GOOGLE_GENERATIVE_AI_API_KEY');
+    }
+    
     const result = await generateObject({
-      model: grok('grok-beta') as any, // Using Grok for roast generation via OpenAI-compatible endpoint
+      model: model as any,
       schema: RoastSchema,
       messages: [
         {
