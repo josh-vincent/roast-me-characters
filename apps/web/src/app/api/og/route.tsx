@@ -20,9 +20,7 @@ export async function GET(request: NextRequest) {
           width: '1200px',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+          background: 'white',
           fontFamily: 'system-ui',
           position: 'relative',
         }}
@@ -35,13 +33,14 @@ export async function GET(request: NextRequest) {
             left: '0',
             right: '0',
             background: 'linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 100%)',
-            padding: '24px',
+            padding: '20px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '16px',
             borderBottom: '3px solid rgba(255,165,0,0.5)',
             boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+            zIndex: '10',
           }}
         >
           <span style={{ display: 'flex', fontSize: '36px' }}>🔥</span>
@@ -57,175 +56,161 @@ export async function GET(request: NextRequest) {
           </span>
         </div>
 
-        {/* Title */}
+        {/* Main Content - Images Side by Side */}
         <div
           style={{
             display: 'flex',
-            fontSize: '42px',
-            fontWeight: 'bold',
-            color: '#1f2937',
-            marginBottom: '30px',
-            marginTop: '100px',
-            textAlign: 'center',
-            maxWidth: '900px',
+            width: '100%',
+            height: '100%',
+            paddingTop: '80px', // Space for banner
           }}
         >
-          {title}
-        </div>
-
-        {/* Images Container */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '80px',
-          }}
-        >
-          {/* Original Image */}
+          {/* Original Image - Left Half */}
           <div
             style={{
+              width: '50%',
+              height: '100%',
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
+              justifyContent: 'center',
+              background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+              position: 'relative',
             }}
           >
+            {/* Original Label */}
             <div
               style={{
-                display: 'flex',
-                fontSize: '20px',
+                position: 'absolute',
+                top: '30px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                fontSize: '24px',
                 fontWeight: 'bold',
                 color: '#6b7280',
-                marginBottom: '16px',
-                letterSpacing: '2px',
+                letterSpacing: '3px',
                 textTransform: 'uppercase',
               }}
             >
               Original
             </div>
-            <div
-              style={{
-                width: '320px',
-                height: '320px',
-                borderRadius: '24px',
-                overflow: 'hidden',
-                border: '6px solid #e5e7eb',
+            {originalImage ? (
+              <img
+                src={originalImage}
+                alt="Original"
+                style={{ 
+                  width: '85%',
+                  height: '70%',
+                  objectFit: 'cover',
+                  borderRadius: '16px',
+                  boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+                }}
+              />
+            ) : (
+              <div style={{ 
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: '#ffffff',
-                boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
-              }}
-            >
-              {originalImage ? (
-                <img
-                  src={originalImage}
-                  alt="Original"
-                  width="320"
-                  height="320"
-                  style={{ objectFit: 'cover', width: '100%', height: '100%' }}
-                />
-              ) : (
-                <div style={{ display: 'flex', fontSize: '60px' }}>📷</div>
-              )}
-            </div>
+                fontSize: '100px',
+                color: '#e5e7eb',
+              }}>
+                📷
+              </div>
+            )}
           </div>
 
-          {/* Arrow */}
+          {/* Generated Image - Right Half */}
           <div
             style={{
+              width: '50%',
+              height: '100%',
               display: 'flex',
               alignItems: 'center',
-              fontSize: '48px',
-              color: '#f97316',
-              fontWeight: 'bold',
-              textShadow: '2px 2px 8px rgba(0,0,0,0.1)',
+              justifyContent: 'center',
+              background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
+              position: 'relative',
             }}
           >
-            →
-          </div>
-
-          {/* Generated Image */}
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-            }}
-          >
+            {/* AI Roasted Label */}
             <div
               style={{
-                display: 'flex',
-                fontSize: '20px',
+                position: 'absolute',
+                top: '30px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                fontSize: '24px',
                 fontWeight: 'bold',
                 color: '#f97316',
-                marginBottom: '16px',
-                letterSpacing: '2px',
+                letterSpacing: '3px',
                 textTransform: 'uppercase',
               }}
             >
               AI Roasted
             </div>
-            <div
-              style={{
-                width: '320px',
-                height: '320px',
-                borderRadius: '24px',
-                overflow: 'hidden',
-                border: '6px solid #fed7aa',
+            {generatedImage ? (
+              <img
+                src={generatedImage}
+                alt="Generated"
+                style={{ 
+                  width: '85%',
+                  height: '70%',
+                  objectFit: 'cover',
+                  borderRadius: '16px',
+                  boxShadow: '0 20px 60px rgba(251,146,60,0.2)',
+                }}
+              />
+            ) : (
+              <div style={{ 
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
-                boxShadow: '0 10px 40px rgba(251,146,60,0.2)',
-              }}
-            >
-              {generatedImage ? (
-                <img
-                  src={generatedImage}
-                  alt="Generated"
-                  width="320"
-                  height="320"
-                  style={{ objectFit: 'cover', width: '100%', height: '100%' }}
-                />
-              ) : (
-                <div style={{ display: 'flex', fontSize: '60px' }}>🎭</div>
-              )}
-            </div>
+                fontSize: '100px',
+                color: '#fed7aa',
+              }}>
+                🎭
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Punchline or Features */}
-        {punchline ? (
+        {/* Bottom text overlay */}
+        {(title || punchline) && (
           <div
             style={{
+              position: 'absolute',
+              bottom: '0',
+              left: '0',
+              right: '0',
+              background: 'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.95) 50%, rgba(255,255,255,1) 100%)',
+              padding: '30px 40px 20px',
               display: 'flex',
-              fontSize: '24px',
-              color: '#dc2626',
-              textAlign: 'center',
-              marginTop: '35px',
-              fontStyle: 'italic',
-              fontWeight: '500',
-              maxWidth: '900px',
-              padding: '0 40px',
-              textShadow: '1px 1px 2px rgba(0,0,0,0.1)',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '10px',
             }}
           >
-            "{punchline}"
+            {title && (
+              <div
+                style={{
+                  fontSize: '32px',
+                  fontWeight: 'bold',
+                  color: '#1f2937',
+                  textAlign: 'center',
+                }}
+              >
+                {title}
+              </div>
+            )}
+            {punchline && (
+              <div
+                style={{
+                  fontSize: '20px',
+                  color: '#dc2626',
+                  textAlign: 'center',
+                  fontStyle: 'italic',
+                  fontWeight: '500',
+                }}
+              >
+                "{punchline}"
+              </div>
+            )}
           </div>
-        ) : features.length > 0 ? (
-          <div
-            style={{
-              display: 'flex',
-              fontSize: '20px',
-              color: '#6b7280',
-              textAlign: 'center',
-              marginTop: '40px',
-            }}
-          >
-            {features.slice(0, 3).join(' • ')}
-          </div>
-        ) : null}
+        )}
 
       </div>
     ),
