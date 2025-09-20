@@ -73,7 +73,8 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
       return;
     }
     
-    if (status === 'generating' || status === 'retrying') {
+    // Poll for any non-failed status
+    if (status === 'pending' || status === 'generating' || status === 'retrying') {
       const timer = setInterval(async () => {
         try {
           const response = await fetch(`/api/character-status/${characterId}`);
@@ -81,20 +82,35 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
             const data = await response.json();
             setCharacter(data.character);
             
+            // Update generation step based on new data
+            if (data.character.generation_params?.features?.length > 0) {
+              setGenerationStep('roasting');
+            }
+            if (data.character.generation_params?.roast_content && !showRoast) {
+              setShowRoast(true);
+              setGenerationStep('creating');
+            }
+            if (data.character.model_url) {
+              setGenerationStep('finalizing');
+            }
+            
             // Check if completed
             if (data.character.generation_params?.status === 'completed' && data.character.seo_slug) {
               clearInterval(timer);
-              router.push(`/character/${data.character.seo_slug}`);
+              // Small delay to show final state
+              setTimeout(() => {
+                router.push(`/character/${data.character.seo_slug}`);
+              }, 1000);
             }
           }
         } catch (error) {
           console.error('Error polling status:', error);
         }
-      }, 3000); // Poll every 3 seconds
+      }, 2000); // Poll every 2 seconds for faster updates
       
       return () => clearInterval(timer);
     }
-  }, [character.generation_params?.status, character.seo_slug, characterId, router]);
+  }, [character.generation_params?.status, character.seo_slug, characterId, router, showRoast]);
 
   const handleRetry = async () => {
     setIsRetrying(true);
@@ -133,14 +149,20 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
           {/* Header */}
           <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-8 py-6 text-white">
             <h1 className="text-3xl font-bold mb-2">
-              {isGenerating ? '🎨 Creating Your Roast Character' : 
+              {generationStep === 'analyzing' ? '🔍 Analyzing Your Photo' :
+               generationStep === 'roasting' ? '🔥 Writing Your Savage Roast' :
+               generationStep === 'creating' ? '🎨 Creating Your Character' :
+               generationStep === 'finalizing' ? '✨ Finalizing Your Masterpiece' :
                isFailed ? '❌ Generation Failed' : 
-               '⏳ Processing'}
+               '⏳ Starting Generation'}
             </h1>
             <p className="text-purple-100">
-              {isGenerating ? 'Our AI is crafting your hilarious caricature...' :
+              {generationStep === 'analyzing' ? 'Detecting your most roastable features...' :
+               generationStep === 'roasting' ? 'Cooking up some brutal jokes about you...' :
+               generationStep === 'creating' ? 'Turning you into a hilarious caricature...' :
+               generationStep === 'finalizing' ? 'Adding the finishing touches...' :
                isFailed ? 'Something went wrong, but you can try again!' :
-               'Preparing your character...'}
+               'Getting everything ready...'}
             </p>
           </div>
 
