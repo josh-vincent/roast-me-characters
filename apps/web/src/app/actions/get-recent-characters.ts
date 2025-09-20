@@ -27,9 +27,9 @@ export async function getRecentCharactersAction() {
       // Simple query without timeout - let Supabase handle its own timeouts
       const { data: characters, error } = await supabase
         .from('roast_me_ai_characters')
-        .select('id,seo_slug,og_title,og_description,generated_image_url,original_image_url,view_count,created_at,public,generation_params')
-        .eq('public', true)
-        .not('generated_image_url', 'is', null)
+        .select('id,seo_slug,og_title,og_description,model_url,image_id,view_count,created_at,is_public,generation_params')
+        .eq('is_public', true)
+        .not('model_url', 'is', null)
         .order('created_at', { ascending: false })
         .limit(12);
       
@@ -55,10 +55,9 @@ export async function getRecentCharactersAction() {
         return {
           ...char,
           // Map the correct column names
-          model_url: char.generated_image_url,
-          image: char.original_image_url ? { file_url: char.original_image_url } : undefined,
+          generated_image_url: char.model_url,
           features: char.generation_params?.features || [],
-          is_public: char.public,
+          public: char.is_public,
           // Include roast content from generation_params
           roast_content: char.generation_params?.roast_content || null
         };

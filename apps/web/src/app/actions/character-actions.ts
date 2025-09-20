@@ -83,18 +83,18 @@ export async function generateCharacter(formData: FormData): Promise<CharacterGe
     const characterData = {
       id: characterId,
       user_id: user?.id || null,
-      session_id: !user && anonSessionId ? anonSessionId : null,
+      image_id: characterId, // Using characterId as image_id for now
       seo_slug: seoSlug,
-      original_image_url: originalUrl,
-      generated_image_url: null,
+      model_url: null, // Will be updated after generation
       generation_params: {
         ...analysisResult,
         roast_content: roastContent,
+        original_image_url: originalUrl, // Store original URL in params
         status: 'pending'
       },
       og_title: `${roastContent.title} | Roast Me Characters`,
       og_description: roastContent.punchline,
-      public: true,
+      is_public: true,
       view_count: 0
     }
 
@@ -160,7 +160,7 @@ export async function retryCharacterGeneration(characterId: string): Promise<Cha
     const { error: updateError } = await supabase
       .from('roast_me_ai_characters')
       .update({
-        generated_image_url: generatedUrl,
+        model_url: generatedUrl,
         generation_params: {
           ...params,
           status: 'completed'
@@ -234,8 +234,8 @@ export async function getRecentCharacters() {
     const { data: characters, error } = await supabase
       .from('roast_me_ai_characters')
       .select('*')
-      .eq('public', true)
-      .not('generated_image_url', 'is', null)
+      .eq('is_public', true)
+      .not('model_url', 'is', null)
       .order('created_at', { ascending: false })
       .limit(12)
     
@@ -286,7 +286,7 @@ async function generateCharacterImageAsync(
       await supabase
         .from('roast_me_ai_characters')
         .update({
-          generated_image_url: generatedUrl,
+          model_url: generatedUrl,
           generation_params: {
             ...analysis,
             roast_content: roastContent,
