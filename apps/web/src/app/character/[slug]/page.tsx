@@ -133,6 +133,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
             height: 630,
             alt: title,
             type: 'image/png',
+            sizes: '1200x630',
           },
         ],
       },
