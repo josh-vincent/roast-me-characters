@@ -165,25 +165,65 @@ export async function generateRoast(
       .map(f => `${f.feature_name}: ${f.feature_value}`)
       .join(', ');
 
-    // Determine which provider to use based on available API keys
-    // Note: Grok-beta (v1) is not compatible with AI SDK v5, so we use Gemini as primary
-    let model;
-    if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-      // Use Gemini 1.5 Flash for roast generation (fast and creative)
-      model = google('gemini-1.5-flash');
-    } else if (process.env.AI_GATEWAY_URL && process.env.AI_GATEWAY_API_KEY) {
-      // Fallback to AI Gateway if configured 
-      // Note: grok-beta is v1 and incompatible with AI SDK v5
-      console.warn('AI Gateway configured but using Gemini for compatibility');
-      model = google('gemini-1.5-flash');
-    } else {
-      throw new Error('No AI provider configured. Please set AI_GATEWAY_API_KEY, XAI_API_KEY, or GOOGLE_GENERATIVE_AI_API_KEY');
+    // Try to use Grok first if available, otherwise fall back to Gemini
+    if (process.env.XAI_API_KEY) {
+      try {
+        // Use generateText with JSON mode for Grok compatibility
+        const result = await generateText({
+          model: grok('grok-2-1212') as any, // Use newer Grok model
+          messages: [
+            {
+              role: 'system',
+              content: `You are a professional roast comedian creating playful, accurate, brutal honest and humorous roasts for a caricature figurine generator.
+
+Your goal is to create a FUNNY, PLAYFUL roast that makes people laugh - This is like a comedy roast where everyone has fun. Be brutal and honest.
+
+You MUST respond with a valid JSON object in this exact format:
+{
+  "title": "A catchy, funny title (max 4 words)",
+  "roast_text": "2-3 sentences of playful roasting about their features",
+  "punchline": "A witty one-liner to finish strong",
+  "figurine_name": "A funny collectible name"
+}
+
+ROAST STYLE:
+- Playful and humorous
+- Brutal and honest
+- Focus on the exaggerated features in a funny way
+- Think comedy club roast or friendly banter between friends
+- Make it quotable and shareable
+- Keep it clean and fun for all audiences
+
+Remember: This should make the person LAUGH, It's all in good fun!`,
+            },
+            {
+              role: 'user',
+              content: `Create a hilarious roast for someone with these features: ${featureDescriptions}. They appear to be ${analysis.gender} and ${analysis.age_range} age range. Personality traits detected: ${analysis.personality_traits.join(', ')}. Remember to output valid JSON!`,
+            },
+          ],
+        });
+        
+        // Parse the JSON response from Grok
+        const roastData = JSON.parse(result.text);
+        return {
+          title: roastData.title || 'The Roastee',
+          roast_text: roastData.roast_text || 'You have some distinctive features!',
+          punchline: roastData.punchline || 'And that\'s what makes you special!',
+          figurine_name: roastData.figurine_name || 'Unique One',
+        };
+      } catch (grokError) {
+        console.warn('Grok generation failed, falling back to Gemini:', grokError);
+        // Fall through to Gemini
+      }
     }
     
-    const result = await generateObject({
-      model: model as any,
-      schema: RoastSchema,
-      messages: [
+    // Fallback to Gemini with generateObject for structured output
+    if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+      const model = google('gemini-1.5-flash');
+      const result = await generateObject({
+        model: model as any,
+        schema: RoastSchema,
+        messages: [
         {
           role: 'system',
           content: `You are a professional roast comedian creating playful, accurate,brutal honest and humorous roasts for a caricature figurine generator.
@@ -215,10 +255,14 @@ Remember: This should make the person LAUGH, It's all in good fun!`,
           
           Make it funny and quotable while being brutally honest and fun!`,
         },
-      ],
-    });
+        ],
+      });
 
-    return result.object;
+      return result.object;
+    }
+    
+    // If no providers are available
+    throw new Error('No AI provider configured. Please set XAI_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY');
   } catch (error) {
     console.error('Roast Generation Error:', error);
     
