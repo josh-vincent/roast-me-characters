@@ -314,11 +314,20 @@ export default function StaticCharacterView({ character }: StaticCharacterViewPr
             </svg>
           </button>
           
-          {/* Composite Image Display */}
+          {/* Progressive Image Display */}
           <div 
             className="relative w-full h-full flex items-center justify-center p-4"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Low quality placeholder - use the cached main image */}
+            <img
+              src={character.model_url}
+              alt="Loading..."
+              className="absolute inset-0 m-auto object-contain blur-sm transition-opacity duration-300"
+              style={{ maxWidth: '90%', maxHeight: '90%' }}
+            />
+            
+            {/* High quality composite image loads on top */}
             <img
               src={`/api/composite-image?main=${encodeURIComponent(character.model_url)}&original=${encodeURIComponent(originalImageUrl)}${
                 character.generation_params?.roast_content?.title 
@@ -330,8 +339,23 @@ export default function StaticCharacterView({ character }: StaticCharacterViewPr
                   : ''
               }`}
               alt={character.generation_params?.roast_content?.title || 'Full screen view'}
-              className="w-full h-full object-contain"
+              className="relative w-full h-full object-contain"
               style={{ maxWidth: '100%', maxHeight: '100%' }}
+              onLoad={(e) => {
+                // Hide blur placeholder once high quality loads
+                const placeholder = e.currentTarget.previousElementSibling as HTMLElement;
+                if (placeholder) {
+                  placeholder.style.opacity = '0';
+                  setTimeout(() => placeholder.style.display = 'none', 300);
+                }
+              }}
+              onError={(e) => {
+                // If composite fails, just use the original
+                const img = e.currentTarget as HTMLImageElement;
+                if (character.model_url) {
+                  img.src = character.model_url;
+                }
+              }}
             />
           </div>
         </div>

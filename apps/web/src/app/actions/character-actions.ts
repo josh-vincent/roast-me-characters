@@ -275,11 +275,18 @@ async function generateCharacterImageAsync(
     const generatedUrl = result?.original || null
     
     if (generatedUrl) {
-      // Create composite OG URL for sharing (without title/punchline for clean design)
+      // Create composite OG URL for sharing with before/after layout
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://roastme.tocld.com'
       const ogImageUrl = new URL('/api/og', baseUrl)
       ogImageUrl.searchParams.set('original', originalUrl)
       ogImageUrl.searchParams.set('generated', generatedUrl)
+      // Add title and punchline for more engaging OG image
+      if (roastContent.title) {
+        ogImageUrl.searchParams.set('title', roastContent.title)
+      }
+      if (roastContent.punchline) {
+        ogImageUrl.searchParams.set('punchline', roastContent.punchline)
+      }
       const compositeOgUrl = ogImageUrl.toString()
       
       // Update the character with the generated image AND composite OG URL
