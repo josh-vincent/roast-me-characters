@@ -17,7 +17,12 @@ interface PageProps {
 // Pre-render popular character pages at build time
 export async function generateStaticParams() {
   try {
-    const supabase = await createClient();
+    // Use direct Supabase client for static generation (no cookies needed)
+    const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
+    const supabase = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
     
     // Get the 20 most popular characters to pre-render
     const { data: characters } = await supabase
@@ -133,7 +138,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
             height: 630,
             alt: title,
             type: 'image/png',
-            sizes: '1200x630',
           },
         ],
       },
