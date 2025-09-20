@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
             display: 'flex',
             width: '100%',
             height: '100%',
-            paddingTop: '80px', // Space for banner
+            paddingTop: '70px', // Space for banner
           }}
         >
           {/* Original Image - Left Half */}
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
               alignItems: 'center',
               justifyContent: 'center',
               background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
-              position: 'relative',
+              padding: '10px',
             }}
           >
             {originalImage ? (
@@ -82,11 +82,11 @@ export async function GET(request: NextRequest) {
                 src={originalImage}
                 alt="Original"
                 style={{ 
-                  width: '90%',
-                  height: '80%',
+                  width: '100%',
+                  height: '100%',
                   objectFit: 'cover',
-                  borderRadius: '16px',
-                  boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+                  borderRadius: '12px',
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
                 }}
               />
             ) : (
@@ -109,35 +109,19 @@ export async function GET(request: NextRequest) {
               alignItems: 'center',
               justifyContent: 'center',
               background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
-              position: 'relative',
+              padding: '10px',
             }}
           >
-            {/* AI Roasted Label */}
-            <div
-              style={{
-                position: 'absolute',
-                top: '30px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                fontSize: '24px',
-                fontWeight: 'bold',
-                color: '#f97316',
-                letterSpacing: '3px',
-                textTransform: 'uppercase',
-              }}
-            >
-              AI Roasted
-            </div>
             {generatedImage ? (
               <img
                 src={generatedImage}
                 alt="Generated"
                 style={{ 
-                  width: '85%',
-                  height: '70%',
+                  width: '100%',
+                  height: '100%',
                   objectFit: 'cover',
-                  borderRadius: '16px',
-                  boxShadow: '0 20px 60px rgba(251,146,60,0.2)',
+                  borderRadius: '12px',
+                  boxShadow: '0 10px 30px rgba(251,146,60,0.15)',
                 }}
               />
             ) : (
