@@ -31,6 +31,7 @@ interface Character {
   };
   model_url?: string;
   thumbnail_url?: string;
+  medium_url?: string;
 }
 
 interface GenerationTrackerProps {
