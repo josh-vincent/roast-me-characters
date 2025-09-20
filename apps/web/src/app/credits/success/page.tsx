@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Suspense } from 'react';
+import { Header } from '../../components/Header';
 
 function CreditsSuccessContent() {
   const router = useRouter();
@@ -80,22 +81,26 @@ function CreditsSuccessContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center">
-      <div className="text-center max-w-md">
-        {/* Success Icon */}
-        <div className="text-6xl mb-6 animate-bounce">🎉</div>
-        
-        {/* Success Message */}
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">
-          Payment Successful!
-        </h1>
-        
-        <p className="text-gray-600 mb-8">
-          Thank you for your purchase! Your credits have been added to your account.
-        </p>
-        
-        {/* Credits Display */}
-        {user && (
+    <div className="min-h-screen bg-white">
+      {/* Navigation Header */}
+      <Header />
+      
+      <div className="bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center min-h-[calc(100vh-4rem)]">
+        <div className="text-center max-w-md">
+          {/* Success Icon */}
+          <div className="text-6xl mb-6 animate-bounce">🎉</div>
+          
+          {/* Success Message */}
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            Payment Successful!
+          </h1>
+          
+          <p className="text-gray-600 mb-8">
+            Thank you for your purchase! Your credits have been added to your account.
+          </p>
+          
+          {/* Credits Display */}
+          {user && (
           <div className="inline-flex items-center bg-white rounded-full px-6 py-3 shadow-sm border border-gray-200 mb-8">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
@@ -107,10 +112,10 @@ function CreditsSuccessContent() {
               </div>
             </div>
           </div>
-        )}
-        
-        {/* Action Buttons */}
-        <div className="space-y-3">
+          )}
+          
+          {/* Action Buttons */}
+          <div className="space-y-3">
           <a 
             href="/"
             className="block w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-orange-500 hover:from-purple-700 hover:to-orange-600 text-white font-medium rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
@@ -124,6 +129,7 @@ function CreditsSuccessContent() {
           >
             View Credit Packages
           </a>
+          </div>
         </div>
       </div>
     </div>

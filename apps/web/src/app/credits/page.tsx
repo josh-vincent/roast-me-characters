@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { Header } from '../components/Header';
 
 interface CreditPackage {
   id: string;
@@ -95,35 +96,39 @@ export default function CreditsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-12">
-      <div className="container mx-auto px-4 max-w-6xl">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-orange-500 bg-clip-text text-transparent">
-            Get More Credits
-          </h1>
-          <p className="text-gray-600 text-lg mb-6">
-            Create more hilarious roast characters with our credit packages
-          </p>
-          
-          {/* Current Credits Display */}
-          {user && (
-            <div className="inline-flex items-center bg-white rounded-full px-6 py-3 shadow-sm border border-gray-200">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                  <span className="text-purple-600 font-bold">🔥</span>
-                </div>
-                <div>
-                  <span className="text-gray-700 font-medium">Your Credits: </span>
-                  <span className="text-purple-600 font-bold text-xl">{currentCredits}</span>
+    <div className="min-h-screen bg-white">
+      {/* Navigation Header */}
+      <Header />
+      
+      <div className="bg-gradient-to-b from-gray-50 to-gray-100 py-12">
+        <div className="container mx-auto px-4 max-w-6xl">
+          {/* Page Header */}
+          <div className="text-center mb-12">
+              <h1 className="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-orange-500 bg-clip-text text-transparent">
+              Get More Credits
+            </h1>
+            <p className="text-gray-600 text-lg mb-6">
+              Create more hilarious roast characters with our credit packages
+            </p>
+            
+            {/* Current Credits Display */}
+            {user && (
+              <div className="inline-flex items-center bg-white rounded-full px-6 py-3 shadow-sm border border-gray-200">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                    <span className="text-purple-600 font-bold">🔥</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-700 font-medium">Your Credits: </span>
+                    <span className="text-purple-600 font-bold text-xl">{currentCredits}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
 
-        {/* Credit Packages */}
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
+          {/* Credit Packages */}
+          <div className="grid md:grid-cols-3 gap-6 mb-12">
           {packages.map((pkg) => (
             <div 
               key={pkg.id} 
@@ -197,6 +202,7 @@ export default function CreditsPage() {
                 Yes! We use industry-standard encryption and never store your payment details. All transactions are processed securely through Stripe.
               </p>
             </div>
+          </div>
           </div>
         </div>
       </div>
