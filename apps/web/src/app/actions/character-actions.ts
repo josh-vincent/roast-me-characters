@@ -73,11 +73,18 @@ export async function generateCharacter(formData: FormData): Promise<CharacterGe
       .from('roast-me-ai')
       .getPublicUrl(originalPath)
 
+    // Generate SEO slug from roast content
+    const seoSlug = `${roastContent.figurine_name || 'character'}-${characterId.slice(0, 8)}`
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    
     // Store character in database
     const characterData = {
       id: characterId,
       user_id: user?.id || null,
       session_id: !user && anonSessionId ? anonSessionId : null,
+      seo_slug: seoSlug,
       original_image_url: originalUrl,
       generated_image_url: null,
       generation_params: {
@@ -88,7 +95,7 @@ export async function generateCharacter(formData: FormData): Promise<CharacterGe
       og_title: `${roastContent.title} | Roast Me Characters`,
       og_description: roastContent.punchline,
       public: true,
-      views_count: 0
+      view_count: 0
     }
 
     const { error: insertError } = await supabase
