@@ -170,7 +170,7 @@ export async function generateRoast(
       try {
         // Use generateText with JSON mode for Grok compatibility
         const result = await generateText({
-          model: grok('grok-2-1212') as any, // Use newer Grok model
+          model: grok('grok-3') as any, // Use latest Grok-3 model
           messages: [
             {
               role: 'system',
