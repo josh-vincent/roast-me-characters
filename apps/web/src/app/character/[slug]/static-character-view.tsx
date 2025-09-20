@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import { ImageWithBanner } from '../../components/ImageWithBanner';
 import { downloadImageWithBanner, shareCharacterUrl } from '@roast-me/ui';
@@ -37,6 +38,8 @@ interface StaticCharacterViewProps {
 }
 
 export default function StaticCharacterView({ character }: StaticCharacterViewProps) {
+  const [showFullScreen, setShowFullScreen] = useState(false);
+  
   // Helper to get the original image URL
   const getOriginalImageUrl = () => {
     // First, check if it's explicitly stored in generation_params
@@ -105,134 +108,169 @@ export default function StaticCharacterView({ character }: StaticCharacterViewPr
 
       {/* Character Display */}
       <div className="bg-gray-50 min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           
-          {/* Main Content */}
+          {/* Main Content Card - Instagram Feed Style */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
             
-            {/* Stats Bar */}
-            <div className="border-b border-gray-100 px-6 py-4">
-              <div className="flex items-center space-x-4 text-sm text-gray-500">
-                <span className="flex items-center">
-                  👁 {character.view_count || 0} views
-                </span>
-                <span className="flex items-center">
-                  ❤️ {character.likes || 0} likes
-                </span>
-                <span>
+            {/* Roast Content at Top */}
+            {character.generation_params?.roast_content && (
+              <div className="px-6 pt-6 pb-4">
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                  🔥 {character.generation_params.roast_content.title}
+                </h1>
+                <p className="text-gray-800 leading-relaxed mb-2">
+                  {character.generation_params.roast_content.roast_text}
+                </p>
+                <p className="text-gray-600 font-medium italic">
+                  "{character.generation_params.roast_content.punchline}"
+                </p>
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <span className="text-sm text-gray-500">Figurine: </span>
+                  <span className="text-sm font-bold text-gray-700">
+                    {character.generation_params.roast_content.figurine_name}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Main AI Generated Image with Original Overlay */}
+            <div className="relative">
+              {/* AI Generated Character - Full Size */}
+              <div 
+                className="relative aspect-square bg-gradient-to-br from-purple-50 to-blue-50 cursor-pointer"
+                onClick={() => setShowFullScreen(true)}
+              >
+                {character.model_url ? (
+                  <ImageWithBanner
+                    src={character.model_url}
+                    alt={character.generation_params?.roast_content?.title || 'Roast character'}
+                    fill
+                    showBanner={true}
+                    priority={true}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center text-purple-600">
+                      <div className="text-6xl mb-2">🎭</div>
+                      <p className="text-lg">AI Character</p>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Original Image Overlay - Bottom Left Corner (1/6 size) */}
+                <div className="absolute bottom-4 left-4 w-1/6 aspect-square bg-white rounded-lg overflow-hidden shadow-lg border-2 border-white">
+                  <Image
+                    src={originalImageUrl}
+                    alt="Original photo"
+                    fill
+                    className="object-cover"
+                    sizes="100px"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs py-0.5 text-center">
+                    Original
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Stats and Actions */}
+            <div className="px-6 py-4">
+              {/* Stats */}
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-100">
+                <div className="flex items-center space-x-4">
+                  <span className="flex items-center text-sm text-gray-600">
+                    <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    {character.view_count || 0}
+                  </span>
+                  <span className="flex items-center text-sm text-gray-600">
+                    <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    {character.likes || 0}
+                  </span>
+                </div>
+                <span className="text-xs text-gray-500">
                   {new Date(character.created_at).toLocaleDateString()}
                 </span>
               </div>
-            </div>
 
-            {/* Content Grid */}
-            <div className="p-8">
-              {/* Roast Title */}
-              {character.generation_params?.roast_content && (
-                <div className="text-center mb-8">
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                    🔥 {character.generation_params.roast_content.title}
-                  </h1>
-                  <p className="text-lg text-gray-600">
-                    {character.generation_params.roast_content.figurine_name}
-                  </p>
-                </div>
-              )}
-              
-              {/* Before/After Images */}
-              <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto mb-8">
-                
-                {/* Original Image */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-gray-700 uppercase text-center">Before</h3>
-                  <div className="relative aspect-square bg-gray-50 rounded-xl overflow-hidden border-2 border-gray-200">
-                    <Image
-                      src={originalImageUrl}
-                      alt="Original photo"
-                      fill
-                      className="object-cover"
-                      priority={true}
-                      sizes="(max-width: 768px) 100vw, 50vw"
-                      onError={(e) => {
-                        // If the image fails to load, show a placeholder
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                      }}
-                    />
-                  </div>
-                </div>
-                
-                {/* Generated Character */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-gray-700 uppercase text-center">After (AI Roast)</h3>
-                  <div className="relative aspect-square bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl overflow-hidden border-2 border-purple-200">
-                    {character.model_url ? (
-                      <ImageWithBanner
-                        src={character.medium_url || character.model_url}
-                        alt={character.generation_params?.roast_content?.title || 'Roast character'}
-                        fill
-                        showBanner={true}
-                        priority={true}
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-center text-purple-600">
-                          <div className="text-4xl mb-2">🎭</div>
-                          <p className="text-sm">AI Character</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Roast Content Box */}
-              {character.generation_params?.roast_content && (
-                <div className="max-w-3xl mx-auto">
-                  <div className="p-6 bg-gradient-to-br from-orange-50 to-red-50 rounded-xl border-2 border-orange-200">
-                    <h2 className="text-xl font-bold text-orange-900 mb-3">
-                      The Roast
-                    </h2>
-                    <p className="text-gray-800 mb-3 leading-relaxed">
-                      {character.generation_params.roast_content.roast_text}
-                    </p>
-                    <p className="text-lg font-medium italic text-orange-800 text-center py-3 border-t border-orange-200">
-                      "{character.generation_params.roast_content.punchline}"
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Action Bar */}
-            <div className="border-t border-gray-100 px-6 py-4 bg-gray-50">
-              <div className="flex items-center justify-between">
+              {/* Action Buttons */}
+              <div className="flex items-center space-x-3">
+                <button 
+                  onClick={handleShare}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Share Roast
+                </button>
+                <button 
+                  onClick={handleDownload}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  Download
+                </button>
                 <a 
                   href="/"
-                  className="text-sm text-gray-600 hover:text-gray-900 font-medium"
+                  className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
                 >
-                  ← Create another
+                  Create New
                 </a>
-                <div className="flex items-center space-x-3">
-                  <button 
-                    onClick={handleShare}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-                  >
-                    Share Roast
-                  </button>
-                  <button 
-                    onClick={handleDownload}
-                    className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700"
-                  >
-                    Download Image
-                  </button>
-                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Full Screen Image Viewer */}
+      {showFullScreen && character.model_url && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
+          onClick={() => setShowFullScreen(false)}
+        >
+          <button
+            className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors"
+            onClick={() => setShowFullScreen(false)}
+          >
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          
+          <div className="relative w-full h-full max-w-6xl max-h-[90vh]">
+            <Image
+              src={character.model_url}
+              alt={character.generation_params?.roast_content?.title || 'Roast character'}
+              fill
+              className="object-contain"
+              sizes="100vw"
+              quality={100}
+            />
+            
+            {/* Original Image Overlay in Full Screen */}
+            <div className="absolute bottom-8 left-8 w-32 aspect-square bg-white rounded-lg overflow-hidden shadow-xl border-2 border-white">
+              <Image
+                src={originalImageUrl}
+                alt="Original photo"
+                fill
+                className="object-cover"
+                sizes="128px"
+              />
+              <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs py-1 text-center">
+                Original
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
