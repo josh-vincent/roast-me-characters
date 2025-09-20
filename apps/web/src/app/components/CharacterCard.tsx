@@ -213,7 +213,7 @@ export function CharacterCard({ character, showPrivacyBadge = false }: Character
         </Link>
       </div>
 
-      {/* Full Screen Image Modal - Use full resolution model_url */}
+      {/* Full Screen Image Modal - Use composite with before/after */}
       {character.model_url && (
         <FullScreenImageModal
           isOpen={isFullScreenOpen}
@@ -223,6 +223,8 @@ export function CharacterCard({ character, showPrivacyBadge = false }: Character
             ? `${character.generation_params.roast_content.title} - ${character.generation_params.roast_content.punchline}`
             : character.og_title || 'Generated character'}
           title={character.generation_params?.roast_content?.title || character.og_title}
+          originalImageSrc={character.image?.file_url || (character.generation_params as any)?.original_image_url}
+          figurineName={character.generation_params?.roast_content?.figurine_name}
           showBanner={true}
         />
       )}

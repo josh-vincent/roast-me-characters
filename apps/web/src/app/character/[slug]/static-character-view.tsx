@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { ImageWithBanner } from '../../components/ImageWithBanner';
+import { FullScreenImageModal } from '../../components/FullScreenImageModal';
 import { downloadImageWithBanner, shareCharacterUrl } from '@roast-me/ui';
 
 interface Character {
@@ -39,32 +40,6 @@ interface StaticCharacterViewProps {
 
 export default function StaticCharacterView({ character }: StaticCharacterViewProps) {
   const [showFullScreen, setShowFullScreen] = useState(false);
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
-  
-  // Minimum swipe distance (in px)
-  const minSwipeDistance = 50;
-  
-  const onTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientY);
-  };
-  
-  const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientY);
-  };
-  
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    
-    const distance = touchStart - touchEnd;
-    const isSwipeDown = distance < -minSwipeDistance;
-    const isSwipeUp = distance > minSwipeDistance;
-    
-    if (isSwipeDown || isSwipeUp) {
-      setShowFullScreen(false);
-    }
-  };
   
   // Helper to get the original image URL
   const getOriginalImageUrl = () => {
@@ -287,78 +262,20 @@ export default function StaticCharacterView({ character }: StaticCharacterViewPr
         </div>
       </div>
 
-      {/* Full Screen Image Viewer */}
-      {showFullScreen && character.model_url && (
-        <div 
-          className="fixed inset-0 z-50 bg-black flex items-center justify-center"
-          onClick={() => setShowFullScreen(false)}
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
-        >
-          {/* Close Instructions */}
-          <div className="absolute top-4 left-0 right-0 text-center pointer-events-none">
-            <p className="text-white/60 text-sm">Tap anywhere or swipe to close</p>
-          </div>
-          
-          {/* Close Button */}
-          <button
-            className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors z-10"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowFullScreen(false);
-            }}
-          >
-            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-          
-          {/* Progressive Image Display */}
-          <div 
-            className="relative w-full h-full flex items-center justify-center p-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Low quality placeholder - use the cached main image */}
-            <img
-              src={character.model_url}
-              alt="Loading..."
-              className="absolute inset-0 m-auto object-contain blur-sm transition-opacity duration-300"
-              style={{ maxWidth: '90%', maxHeight: '90%' }}
-            />
-            
-            {/* High quality composite image loads on top */}
-            <img
-              src={`/api/composite-image?main=${encodeURIComponent(character.model_url)}&original=${encodeURIComponent(originalImageUrl)}${
-                character.generation_params?.roast_content?.title 
-                  ? `&title=${encodeURIComponent(character.generation_params.roast_content.title)}` 
-                  : ''
-              }${
-                character.generation_params?.roast_content?.figurine_name 
-                  ? `&figurine=${encodeURIComponent(character.generation_params.roast_content.figurine_name)}` 
-                  : ''
-              }`}
-              alt={character.generation_params?.roast_content?.title || 'Full screen view'}
-              className="relative w-full h-full object-contain"
-              style={{ maxWidth: '100%', maxHeight: '100%' }}
-              onLoad={(e) => {
-                // Hide blur placeholder once high quality loads
-                const placeholder = e.currentTarget.previousElementSibling as HTMLElement;
-                if (placeholder) {
-                  placeholder.style.opacity = '0';
-                  setTimeout(() => placeholder.style.display = 'none', 300);
-                }
-              }}
-              onError={(e) => {
-                // If composite fails, just use the original
-                const img = e.currentTarget as HTMLImageElement;
-                if (character.model_url) {
-                  img.src = character.model_url;
-                }
-              }}
-            />
-          </div>
-        </div>
+      {/* Full Screen Image Modal - Use composite with before/after */}
+      {character.model_url && (
+        <FullScreenImageModal
+          isOpen={showFullScreen}
+          onClose={() => setShowFullScreen(false)}
+          imageSrc={character.model_url}
+          imageAlt={character.generation_params?.roast_content?.title || 'Roast character'}
+          title={character.generation_params?.roast_content?.title}
+          originalImageSrc={originalImageUrl}
+          figurineName={character.generation_params?.roast_content?.figurine_name}
+          onDownload={handleDownload}
+          onShare={handleShare}
+          showBanner={true}
+        />
       )}
     </main>
   );

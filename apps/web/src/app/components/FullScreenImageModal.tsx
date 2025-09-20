@@ -14,6 +14,8 @@ interface FullScreenImageModalProps {
   onDownload?: () => void;
   onShare?: () => void;
   showBanner?: boolean;
+  originalImageSrc?: string;
+  figurineName?: string;
 }
 
 export function FullScreenImageModal({
@@ -24,7 +26,9 @@ export function FullScreenImageModal({
   title,
   onDownload,
   onShare,
-  showBanner = true
+  showBanner = true,
+  originalImageSrc,
+  figurineName
 }: FullScreenImageModalProps) {
   const [isZoomed, setIsZoomed] = useState(false);
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
@@ -194,7 +198,38 @@ export function FullScreenImageModal({
             </div>
           )}
           
-          {showBanner ? (
+          {/* Use composite image API if we have original image, otherwise regular image */}
+          {originalImageSrc ? (
+            <>
+              {/* Low quality placeholder - use the cached main image */}
+              <img
+                src={imageSrc}
+                alt="Loading..."
+                className="absolute inset-0 m-auto object-contain blur-sm transition-opacity duration-300"
+                style={{ maxWidth: '90%', maxHeight: '90%', opacity: imageLoaded ? '0' : '1' }}
+              />
+              
+              {/* High quality composite image with before/after and banner */}
+              <img
+                src={`/api/composite-image?main=${encodeURIComponent(imageSrc)}&original=${encodeURIComponent(originalImageSrc)}${
+                  title ? `&title=${encodeURIComponent(title)}` : ''
+                }${
+                  figurineName ? `&figurine=${encodeURIComponent(figurineName)}` : ''
+                }`}
+                alt={imageAlt}
+                className={`max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-opacity duration-300 ${
+                  imageLoaded ? 'opacity-100' : 'opacity-0'
+                }`}
+                onLoad={() => setImageLoaded(true)}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  width: 'auto',
+                  height: 'auto'
+                }}
+              />
+            </>
+          ) : showBanner ? (
             <div className="relative" style={{ width: '800px', height: '800px', maxWidth: '100%', maxHeight: '100%' }}>
               <ImageWithBanner
                 src={imageSrc}
