@@ -264,6 +264,19 @@ async function generateCharacterImageAsync(
   try {
     const supabase = await createClient()
     
+    // Update status to 'generating' to show we're actively working
+    await supabase
+      .from('roast_me_ai_characters')
+      .update({
+        generation_params: {
+          ...analysis,
+          roast_content: roastContent,
+          original_image_url: originalUrl,
+          status: 'generating'
+        }
+      })
+      .eq('id', characterId)
+    
     // Generate the character image
     const result = await generateCharacterImage(
       analysis.features,

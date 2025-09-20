@@ -44,24 +44,29 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
   const [character, setCharacter] = useState(initialCharacter);
   const [retryError, setRetryError] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
-  const [generationStep, setGenerationStep] = useState<'analyzing' | 'roasting' | 'creating' | 'finalizing'>('analyzing');
-  const [showRoast, setShowRoast] = useState(false);
+  
+  // Since roast is already generated when we get here, start at 'roasting' and show it immediately
+  const hasRoastContent = initialCharacter.generation_params?.roast_content;
+  const [generationStep, setGenerationStep] = useState<'analyzing' | 'roasting' | 'creating' | 'finalizing'>(
+    hasRoastContent ? 'roasting' : 'analyzing'
+  );
+  const [showRoast, setShowRoast] = useState(!!hasRoastContent);
   
   // Update generation steps based on data
   useEffect(() => {
-    if (character.generation_params?.features && character.generation_params?.features.length > 0) {
-      setGenerationStep('roasting');
-    }
-    if (character.generation_params?.roast_content && !showRoast) {
+    // If we have roast content already (which we should), show it and move to creating
+    if (character.generation_params?.roast_content && generationStep === 'roasting') {
+      // After a brief moment showing the roast, move to creating
       setTimeout(() => {
-        setShowRoast(true);
         setGenerationStep('creating');
-      }, 500);
+      }, 2000);
     }
+    
+    // When model URL arrives, we're finalizing
     if (character.model_url) {
       setGenerationStep('finalizing');
     }
-  }, [character.generation_params?.features, character.generation_params?.roast_content, character.model_url, showRoast]);
+  }, [character.generation_params?.roast_content, character.model_url, generationStep]);
 
   // Poll for updates while generating
   useEffect(() => {
@@ -73,8 +78,8 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
       return;
     }
     
-    // Poll for any non-failed status
-    if (status === 'pending' || status === 'generating' || status === 'retrying') {
+    // Poll for any non-failed status (including 'pending' which is the initial status)
+    if (status === 'pending' || status === 'generating' || status === 'retrying' || !status) {
       const timer = setInterval(async () => {
         try {
           const response = await fetch(`/api/character-status/${characterId}`);
@@ -83,14 +88,8 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
             setCharacter(data.character);
             
             // Update generation step based on new data
-            if (data.character.generation_params?.features?.length > 0) {
-              setGenerationStep('roasting');
-            }
-            if (data.character.generation_params?.roast_content && !showRoast) {
-              setShowRoast(true);
-              setGenerationStep('creating');
-            }
-            if (data.character.model_url) {
+            // Since roast is already done, we're mainly waiting for the image
+            if (data.character.model_url && generationStep !== 'finalizing') {
               setGenerationStep('finalizing');
             }
             
