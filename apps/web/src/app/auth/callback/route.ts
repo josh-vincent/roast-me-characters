@@ -36,9 +36,27 @@ export async function GET(request: Request) {
       }
     )
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { error, data } = await supabase.auth.exchangeCodeForSession(code)
 
-    if (!error) {
+    if (!error && data.user) {
+      // Ensure profile exists for the authenticated user
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: data.user.id,
+          daily_credits_used: 0,
+          daily_credits_reset_at: new Date().toISOString(),
+          credits: 0
+        }, {
+          onConflict: 'id',
+          ignoreDuplicates: true
+        })
+      
+      if (profileError) {
+        console.error('Error ensuring profile exists:', profileError)
+        // Don't fail the auth flow if profile creation fails
+      }
+      
       // Migrate anonymous characters if session ID is provided
       if (anonSessionId) {
         const migrationResult = await migrateAnonymousCharacters(anonSessionId)

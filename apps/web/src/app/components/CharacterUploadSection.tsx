@@ -8,25 +8,101 @@ import { useAuth } from '@/contexts/AuthContext';
 import { SignupPrompt } from '@/components/SignupPrompt';
 import { useAnonymousSession } from '@/hooks/useAnonymousSession';
 import { toast } from 'sonner';
+import { getErrorInfo, isRecoverableError, formatErrorForToast } from '@/lib/error-messages';
 
 type WorkflowStep = 'upload' | 'generate';
 
 export function CharacterUploadSection() {
   const router = useRouter();
-  const { user, signInWithGoogle, loading, getCredits } = useAuth();
+  const { user, signInWithGoogle, loading, getCredits, getCreditBalance } = useAuth();
   const { getSessionId } = useAnonymousSession();
   const [currentStep, setCurrentStep] = useState<WorkflowStep>('upload');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSignupPrompt, setShowSignupPrompt] = useState(false);
+  const [userCredits, setUserCredits] = useState<number | null>(null);
+  const [creditBalance, setCreditBalance] = useState<{
+    dailyAvailable: number;
+    purchasedCredits: number;
+    totalAvailable: number;
+  } | null>(null);
+  const [canUpload, setCanUpload] = useState(true);
+  
+  // Pre-fetch credits when component mounts or user changes
+  useEffect(() => {
+    const fetchCredits = async () => {
+      try {
+        const balance = await getCreditBalance();
+        if (balance) {
+          setCreditBalance({
+            dailyAvailable: balance.dailyAvailable,
+            purchasedCredits: balance.purchasedCredits,
+            totalAvailable: balance.totalAvailable
+          });
+          setUserCredits(balance.totalAvailable);
+          setCanUpload(balance.totalAvailable > 0);
+          
+          // Proactive warnings based on credit type
+          if (user) {
+            if (balance.totalAvailable === 1 && balance.purchasedCredits === 0) {
+              toast.info('Last daily credit!', {
+                description: 'This is your last free credit for today',
+                action: {
+                  label: 'Get More',
+                  onClick: () => router.push('/credits')
+                }
+              });
+            } else if (balance.totalAvailable === 0) {
+              toast.warning('No credits remaining', {
+                description: balance.dailyAvailable === 0 ? 
+                  'Daily credits used. Purchase more or wait until tomorrow.' : 
+                  'Purchase credits to continue creating',
+                action: {
+                  label: 'Get Credits',
+                  onClick: () => router.push('/credits')
+                }
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch credits:', err);
+        // Default for anonymous users
+        if (!user) {
+          setCreditBalance({
+            dailyAvailable: 3,
+            purchasedCredits: 0,
+            totalAvailable: 3
+          });
+          setCanUpload(true);
+        }
+      }
+    };
+    
+    fetchCredits();
+  }, [user, getCreditBalance, router]);
   
   const handleUpload = async (source: File) => {
-    // Check credits before starting for authenticated users
+    // Pre-flight credit check for authenticated users
+    if (user && !canUpload) {
+      toast.error('No credits remaining', {
+        description: 'Purchase more credits to continue creating characters',
+        action: {
+          label: 'Get Credits',
+          onClick: () => router.push('/credits')
+        },
+        duration: 5000
+      });
+      return;
+    }
+    
+    // Double-check credits just before upload for authenticated users
     if (user) {
-      const credits = await getCredits();
-      if (credits <= 0) {
+      const currentCredits = await getCredits();
+      if (currentCredits <= 0) {
+        setCanUpload(false);
         toast.error('No credits remaining', {
-          description: 'Purchase more credits to continue creating characters',
+          description: 'Your credits have been used. Purchase more to continue.',
           action: {
             label: 'Get Credits',
             onClick: () => router.push('/credits')
@@ -34,6 +110,7 @@ export function CharacterUploadSection() {
         });
         return;
       }
+      setUserCredits(currentCredits);
     }
 
     setCurrentStep('generate');
@@ -60,12 +137,18 @@ export function CharacterUploadSection() {
       const result = await generateCharacter(formData);
       
       if (!result || !result.success) {
-        const errorMessage = result?.error || 'Character generation failed';
-        toast.error('Generation failed', {
-          description: errorMessage,
+        const errorInfo = getErrorInfo(result?.error || 'generation_failed');
+        const toastConfig = formatErrorForToast(result?.error);
+        
+        toast.error(toastConfig.title, {
+          description: toastConfig.description,
+          duration: toastConfig.duration,
           action: result?.requiresAuth ? {
             label: 'Sign in',
             onClick: () => signInWithGoogle()
+          } : toastConfig.recoverable ? {
+            label: 'Try again',
+            onClick: () => handleUpload(source)
           } : undefined
         });
         
@@ -93,15 +176,19 @@ export function CharacterUploadSection() {
         setCurrentStep('upload');
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to generate character';
-      toast.error('Error', {
-        description: errorMessage,
-        action: {
+      const toastConfig = formatErrorForToast(err);
+      
+      toast.error(toastConfig.title, {
+        description: toastConfig.description,
+        duration: toastConfig.duration,
+        action: toastConfig.recoverable ? {
           label: 'Try again',
           onClick: () => handleUpload(source)
-        }
+        } : undefined
       });
+      
       setCurrentStep('upload');
+      setError(toastConfig.title);
     } finally {
       setIsProcessing(false);
     }
@@ -124,10 +211,26 @@ export function CharacterUploadSection() {
                     <span className="text-gray-700 text-sm font-medium">
                       {loading ? (
                         <>Credits: <span className="text-purple-600 font-bold">Loading...</span></>
-                      ) : user ? (
-                        <>Credits: <span className="text-purple-600 font-bold">Available</span></>
+                      ) : creditBalance ? (
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-2">
+                            {creditBalance.dailyAvailable > 0 && (
+                              <span className="text-xs">
+                                Daily: <span className="text-purple-600 font-bold">{creditBalance.dailyAvailable}/3</span>
+                              </span>
+                            )}
+                            {creditBalance.purchasedCredits > 0 && (
+                              <span className="text-xs">
+                                Purchased: <span className="text-blue-600 font-bold">{creditBalance.purchasedCredits}</span>
+                              </span>
+                            )}
+                            {creditBalance.totalAvailable === 0 && (
+                              <span className="text-xs text-red-600">No credits</span>
+                            )}
+                          </div>
+                        </div>
                       ) : (
-                        <>Free Trial: <span className="text-purple-600 font-bold">3 Images</span></>
+                        <>Free Trial: <span className="text-purple-600 font-bold">3 Daily</span></>
                       )}
                     </span>
                     {/* Show appropriate action button */}

@@ -465,6 +465,56 @@ async function tryAiSdkImageGeneration(prompt: string): Promise<{ original: stri
   return null;
 }
 
+// Helper function for intelligent retry with different strategies
+async function retryWithStrategy<T>(
+  func: () => Promise<T>,
+  context: { attemptNumber: number; lastError?: Error },
+  maxRetries: number = 3
+): Promise<T> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      context.attemptNumber = attempt;
+      return await func();
+    } catch (error) {
+      context.lastError = error as Error;
+      
+      // Don't retry on non-recoverable errors
+      if (isNonRecoverableError(error)) {
+        throw error;
+      }
+      
+      if (attempt < maxRetries) {
+        // Different delay strategies based on error type
+        const delay = getRetryDelay(error, attempt);
+        console.log(`🔄 Retry attempt ${attempt}/${maxRetries} after ${delay}ms delay. Error: ${error.message}`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  throw context.lastError;
+}
+
+function isNonRecoverableError(error: any): boolean {
+  const nonRecoverable = ['invalid_image', 'invalid_api_key', 'invalid_request', 'forbidden'];
+  const errorStr = typeof error === 'string' ? error : error?.message || '';
+  return nonRecoverable.some(msg => errorStr.toLowerCase().includes(msg));
+}
+
+function getRetryDelay(error: any, attemptNumber: number): number {
+  const errorStr = typeof error === 'string' ? error : error?.message || '';
+  
+  if (errorStr.includes('timeout')) {
+    return Math.min(3000 * attemptNumber, 10000); // 3s, 6s, 9s, max 10s
+  } else if (errorStr.includes('rate') || errorStr.includes('429')) {
+    return Math.min(5000 * Math.pow(2, attemptNumber - 1), 30000); // 5s, 10s, 20s, max 30s
+  } else if (errorStr.includes('503') || errorStr.includes('502')) {
+    return Math.min(2000 * attemptNumber, 8000); // 2s, 4s, 6s, max 8s
+  }
+  
+  // Default exponential backoff
+  return Math.min(1000 * Math.pow(2, attemptNumber - 1), 5000); // 1s, 2s, 4s, max 5s
+}
+
 export async function generateCharacterImage(
   features: Pick<AIFeature, 'feature_name' | 'feature_value' | 'exaggeration_factor'>[],
   analysis: FeatureAnalysis,

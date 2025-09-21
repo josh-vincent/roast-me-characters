@@ -14,11 +14,11 @@ interface CreditPackage {
 }
 
 export default function CreditsPage() {
-  const { signInWithGoogle, user, getCredits } = useAuth();
+  const { signInWithGoogle, user, getCredits, getCreditBalance } = useAuth();
   const [loading, setLoading] = useState<string | null>(null);
   const [packages, setPackages] = useState<CreditPackage[]>([]);
   const [packagesLoading, setPackagesLoading] = useState(true);
-  const [currentCredits, setCurrentCredits] = useState<number>(0);
+  const [creditBalance, setCreditBalance] = useState<any>(null);
   const [paymentProvider, setPaymentProvider] = useState<string>('');
 
   useEffect(() => {
@@ -40,16 +40,22 @@ export default function CreditsPage() {
   }, []);
 
   useEffect(() => {
-    // Fetch user credits if logged in
+    // Fetch user credit balance if logged in
     const fetchCredits = async () => {
       if (user) {
-        const credits = await getCredits();
-        setCurrentCredits(credits);
+        if (getCreditBalance) {
+          const balance = await getCreditBalance();
+          setCreditBalance(balance);
+        } else {
+          // Fallback to old getCredits for backward compatibility
+          const credits = await getCredits();
+          setCreditBalance({ totalAvailable: credits });
+        }
       }
     };
 
     fetchCredits();
-  }, [user, getCredits]);
+  }, [user, getCredits, getCreditBalance]);
 
   const handlePurchase = async (productId: string) => {
     if (!user) {
@@ -123,17 +129,27 @@ export default function CreditsPage() {
             </p>
             
             {/* Current Credits Display */}
-            {user && (
-              <div className="inline-flex items-center bg-white rounded-full px-6 py-3 shadow-sm border border-gray-200">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                    <span className="text-purple-600 font-bold">🔥</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-700 font-medium">Your Credits: </span>
-                    <span className="text-purple-600 font-bold text-xl">{currentCredits}</span>
+            {user && creditBalance && (
+              <div className="inline-flex flex-col items-center space-y-2">
+                <div className="inline-flex items-center bg-white rounded-full px-6 py-3 shadow-sm border border-gray-200">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                      <span className="text-purple-600 font-bold">🔥</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-700 font-medium">Total Credits: </span>
+                      <span className="text-purple-600 font-bold text-xl">{creditBalance.totalAvailable || 0}</span>
+                    </div>
                   </div>
                 </div>
+                {creditBalance.dailyAvailable !== undefined && (
+                  <div className="text-sm text-gray-600">
+                    <span className="font-medium">Daily: {creditBalance.dailyAvailable}/3</span>
+                    {creditBalance.purchasedCredits > 0 && (
+                      <span className="ml-3">Purchased: {creditBalance.purchasedCredits}</span>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -189,14 +205,21 @@ export default function CreditsPage() {
             <div>
               <h3 className="font-semibold text-gray-900 mb-2">How do credits work?</h3>
               <p className="text-gray-600">
-                Each roast character generation costs 1 credit. You can purchase credits in packages and use them whenever you want.
+                Each roast character generation costs 1 credit. You get 3 free daily credits that reset every 24 hours. Need more? Purchase credit packages that never expire!
               </p>
             </div>
             
             <div>
-              <h3 className="font-semibold text-gray-900 mb-2">Do credits expire?</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">When do daily credits reset?</h3>
               <p className="text-gray-600">
-                No! Your credits never expire. Use them at your own pace.
+                Your 3 daily credits reset automatically at midnight UTC. The app will always use your daily credits first before using purchased credits.
+              </p>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-2">Do purchased credits expire?</h3>
+              <p className="text-gray-600">
+                No! Purchased credits never expire. Use them at your own pace. Daily credits reset every 24 hours.
               </p>
             </div>
             

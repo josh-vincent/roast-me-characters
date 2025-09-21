@@ -42,31 +42,62 @@ export async function POST(request: NextRequest) {
         const { userId, credits } = body.data.metadata || {};
         
         if (userId && credits) {
-          // Get current user credits first, then add new credits
-          const { data: user } = await supabase
-            .from('roast_me_ai_users')
-            .select('credits')
+          // Ensure profile exists and get current credits
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('id, credits')
             .eq('id', userId)
             .single();
             
-          if (user) {
-            const newCredits = user.credits + parseInt(credits);
-            const { error } = await supabase
-              .from('roast_me_ai_users')
+          if (!profile) {
+            // Create profile if it doesn't exist
+            const { error: createError } = await supabase
+              .from('profiles')
+              .insert({ 
+                id: userId,
+                credits: parseInt(credits),
+                daily_credits_used: 0,
+                daily_credits_reset_at: new Date().toISOString()
+              });
+              
+            if (createError) {
+              console.error('Error creating profile:', createError);
+              return NextResponse.json({ error: 'Failed to create profile' }, { status: 500 });
+            }
+            
+            console.log(`Created profile and added ${credits} credits for user ${userId}`);
+          } else {
+            // Add purchased credits to existing profile
+            const newCredits = (profile.credits || 0) + parseInt(credits);
+            const { error: updateError } = await supabase
+              .from('profiles')
               .update({ 
-                credits: newCredits,
-                updated_at: new Date().toISOString()
+                credits: newCredits
               })
               .eq('id', userId);
 
-            if (error) {
-              console.error('Error adding credits to user:', error);
+            if (updateError) {
+              console.error('Error adding credits to profile:', updateError);
               return NextResponse.json({ error: 'Failed to add credits' }, { status: 500 });
             }
 
-            console.log(`Successfully added ${credits} credits to user ${userId}. New total: ${newCredits}`);
-          } else {
-            console.log(`User not found in database: ${userId}. The user may need to be created first.`);
+            // Log the transaction
+            const { error: transactionError } = await supabase
+              .from('credit_transactions')
+              .insert({
+                user_id: userId,
+                amount: parseInt(credits),
+                transaction_type: 'purchase',
+                description: `Purchased ${credits} credits via Polar`,
+                balance_after: newCredits
+              });
+              
+            if (transactionError) {
+              console.error('Error logging transaction:', transactionError);
+              // Don't fail the webhook if transaction logging fails
+            }
+
+            console.log(`Successfully added ${credits} purchased credits to user ${userId}. New total: ${newCredits}`);
           }
         }
         break;

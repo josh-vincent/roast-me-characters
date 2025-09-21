@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 
 interface SafeImageProps {
@@ -13,6 +13,8 @@ interface SafeImageProps {
   priority?: boolean;
   onError?: () => void;
   showLoadingState?: boolean;
+  maxRetries?: number;
+  retryDelay?: number;
 }
 
 export function SafeImage({ 
@@ -24,21 +26,64 @@ export function SafeImage({
   sizes,
   priority = false,
   onError,
-  showLoadingState = true
+  showLoadingState = true,
+  maxRetries = 3,
+  retryDelay = 1000
 }: SafeImageProps) {
   const [imgSrc, setImgSrc] = useState(src);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const retryTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Reset when src changes
+  useEffect(() => {
+    if (src !== imgSrc) {
+      setImgSrc(src);
+      setRetryCount(0);
+      setIsLoading(true);
+      setHasError(false);
+    }
+  }, [src]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleError = () => {
-    console.error(`Failed to load image: ${imgSrc}`);
+    console.warn(`Failed to load image: ${imgSrc}, attempt ${retryCount + 1}/${maxRetries}`);
     
-    if (fallbackSrc && imgSrc !== fallbackSrc) {
-      // Try fallback image
+    // Clear any existing timeout
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+    }
+    
+    // Try retry logic first
+    if (retryCount < maxRetries && imgSrc === src) {
+      const delay = retryDelay * Math.pow(2, retryCount); // Exponential backoff
+      
+      console.log(`Retrying image load in ${delay}ms...`);
+      
+      retryTimeoutRef.current = setTimeout(() => {
+        setRetryCount(prev => prev + 1);
+        // Add cache buster to force retry
+        const separator = (src?.toString() || '').includes('?') ? '&' : '?';
+        setImgSrc(`${src}${separator}retry=${Date.now()}`);
+      }, delay);
+    } else if (fallbackSrc && imgSrc !== fallbackSrc) {
+      // Try fallback image after retries exhausted
+      console.log('Using fallback image after retries exhausted');
       setImgSrc(fallbackSrc);
+      setRetryCount(0); // Reset for fallback attempts
     } else {
-      // No fallback or fallback also failed
+      // No more options, show error state
       setHasError(true);
+      setIsLoading(false);
       onError?.();
     }
   };
@@ -61,11 +106,18 @@ export function SafeImage({
 
   return (
     <>
-      {/* Loading state */}
+      {/* Loading state with retry indicator */}
       {showLoadingState && isLoading && (
-        <div className={`flex items-center justify-center bg-gray-100 animate-pulse ${fill ? 'absolute inset-0' : 'w-full h-full'}`}>
-          <div className="text-center text-gray-400">
-            <div className="w-8 h-8 border-3 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+        <div className={`flex items-center justify-center bg-gray-100 animate-pulse ${fill ? 'absolute inset-0 z-10' : 'w-full h-full'}`}>
+          <div className="text-center">
+            {retryCount > 0 ? (
+              <div className="space-y-2">
+                <div className="w-8 h-8 border-3 border-gray-300 border-t-gray-600 rounded-full animate-spin mx-auto" />
+                <p className="text-xs text-gray-500">Retrying... ({retryCount}/{maxRetries})</p>
+              </div>
+            ) : (
+              <div className="w-8 h-8 border-3 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+            )}
           </div>
         </div>
       )}

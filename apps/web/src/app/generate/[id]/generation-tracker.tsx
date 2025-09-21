@@ -40,6 +40,34 @@ interface GenerationTrackerProps {
   initialCharacter: Character;
 }
 
+// Status messages that rotate to show progress
+const STATUS_MESSAGES = {
+  analyzing: [
+    'Detecting your features...',
+    'Analyzing facial characteristics...',
+    'Processing image data...',
+    'Identifying roastable traits...'
+  ],
+  roasting: [
+    'Writing savage jokes...',
+    'Crafting the perfect roast...',
+    'Adding comedic touches...',
+    'Maximizing humor potential...'
+  ],
+  creating: [
+    'Generating your caricature...',
+    'Exaggerating features...',
+    'Building 3D model...',
+    'Adding finishing touches...'
+  ],
+  finalizing: [
+    'Polishing your character...',
+    'Saving to gallery...',
+    'Almost ready...',
+    'Finalizing details...'
+  ]
+};
+
 export default function GenerationTracker({ characterId, initialCharacter }: GenerationTrackerProps) {
   const router = useRouter();
   const [character, setCharacter] = useState(initialCharacter);
@@ -47,6 +75,7 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
   const [isRetrying, setIsRetrying] = useState(false);
   const [hasTimedOut, setHasTimedOut] = useState(false);
   const [generationStartTime] = useState(Date.now());
+  const [statusMessageIndex, setStatusMessageIndex] = useState(0);
   
   // Since roast is already generated when we get here, start at 'roasting' and show it immediately
   const hasRoastContent = initialCharacter.generation_params?.roast_content;
@@ -55,6 +84,20 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
   );
   const [showRoast, setShowRoast] = useState(!!hasRoastContent);
   
+  // Rotate status messages every 3 seconds to show progress
+  useEffect(() => {
+    if (!hasTimedOut && !isFailed && generationStep) {
+      const interval = setInterval(() => {
+        setStatusMessageIndex(prev => {
+          const messages = STATUS_MESSAGES[generationStep];
+          return (prev + 1) % messages.length;
+        });
+      }, 3000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [generationStep, hasTimedOut, character.generation_params?.status]);
+  
   // Update generation steps based on data
   useEffect(() => {
     // If we have roast content already (which we should), show it and move to creating
@@ -62,12 +105,14 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
       // After a brief moment showing the roast, move to creating
       setTimeout(() => {
         setGenerationStep('creating');
+        setStatusMessageIndex(0); // Reset message index for new step
       }, 2000);
     }
     
     // When model URL arrives, we're finalizing
     if (character.model_url) {
       setGenerationStep('finalizing');
+      setStatusMessageIndex(0); // Reset message index for new step
     }
   }, [character.generation_params?.roast_content, character.model_url, generationStep]);
 
@@ -183,6 +228,11 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
   const status = character.generation_params?.status;
   const isFailed = status === 'failed' || status === 'retry_failed';
   const isGenerating = status === 'generating' || status === 'retrying';
+  
+  // Get current status message
+  const currentStatusMessage = !hasTimedOut && !isFailed && STATUS_MESSAGES[generationStep] 
+    ? STATUS_MESSAGES[generationStep][statusMessageIndex] 
+    : null;
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-purple-50 to-blue-50 flex items-center justify-center py-12">
@@ -211,15 +261,11 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
                'Preparing...'}
             </h1>
             
-            {/* Current Step Description */}
-            <p className="text-gray-600 mb-8">
+            {/* Current Step Description with rotating messages */}
+            <p className="text-gray-600 mb-8 min-h-[24px] transition-all duration-500">
               {hasTimedOut ? 'Your character is still being created. Redirecting you to the character page...' :
-               generationStep === 'analyzing' ? 'Detecting features...' :
-               generationStep === 'roasting' ? 'Cooking up savage jokes...' :
-               generationStep === 'creating' ? 'Generating your caricature...' :
-               generationStep === 'finalizing' ? 'Adding finishing touches...' :
                isFailed ? 'The generation failed, but you can try again.' :
-               'Getting everything ready...'}
+               STATUS_MESSAGES[generationStep]?.[statusMessageIndex] || 'Getting everything ready...'}
             </p>
 
             {/* Show roast content when available, but in a simpler way */}

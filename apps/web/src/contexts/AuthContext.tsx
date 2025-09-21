@@ -5,12 +5,21 @@ import { createClient } from '@/lib/supabase/client'
 import { User } from '@supabase/supabase-js'
 import { signInWithGoogle, signOut } from '@/app/actions/auth-actions'
 
+interface CreditBalance {
+  dailyAvailable: number
+  dailyUsed: number
+  purchasedCredits: number
+  totalAvailable: number
+  nextResetTime: Date
+}
+
 interface AuthContextType {
   user: User | null
   loading: boolean
   signInWithGoogle: (returnTo?: string) => Promise<void>
   signOut: () => Promise<void>
   getCredits: () => Promise<number>
+  getCreditBalance: () => Promise<CreditBalance | null>
   useCredits: (amount: number, reason: string) => Promise<boolean>
 }
 
@@ -47,24 +56,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [supabase])
 
   const getCredits = async (): Promise<number> => {
-    if (!user) return 0
+    if (!user) return 3 // Anonymous users get 3 daily credits
 
     try {
+      // Use the new get_credit_balance function
       const { data, error } = await supabase
-        .from('profiles')
-        .select('credits')
-        .eq('id', user.id)
+        .rpc('get_credit_balance', { p_user_id: user.id })
         .single()
 
       if (error) {
         console.error('Error fetching credits:', error)
-        return 0
+        // Fallback to old method if function doesn't exist yet
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('credits')
+          .eq('id', user.id)
+          .single()
+        
+        return profile?.credits || 0
       }
 
-      return data?.credits || 0
+      return data?.total_available || 0
     } catch (error) {
       console.error('Error in getCredits:', error)
       return 0
+    }
+  }
+
+  const getCreditBalance = async (): Promise<CreditBalance | null> => {
+    if (!user) {
+      // Anonymous users get 3 daily credits
+      return {
+        dailyAvailable: 3,
+        dailyUsed: 0,
+        purchasedCredits: 0,
+        totalAvailable: 3,
+        nextResetTime: new Date(Date.now() + 24 * 60 * 60 * 1000)
+      }
+    }
+
+    try {
+      const { data, error } = await supabase
+        .rpc('get_credit_balance', { p_user_id: user.id })
+        .single()
+
+      if (error) {
+        console.error('Error fetching credit balance:', error)
+        return null
+      }
+
+      return {
+        dailyAvailable: data.daily_available || 0,
+        dailyUsed: data.daily_used || 0,
+        purchasedCredits: data.purchased_credits || 0,
+        totalAvailable: data.total_available || 0,
+        nextResetTime: new Date(data.next_reset_time)
+      }
+    } catch (error) {
+      console.error('Error in getCreditBalance:', error)
+      return null
     }
   }
 
@@ -72,50 +122,78 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return false
 
     try {
-      // Start transaction
-      const { data: profile, error: fetchError } = await supabase
-        .from('profiles')
-        .select('credits')
-        .eq('id', user.id)
+      // Use the new use_credits database function
+      const { data, error } = await supabase
+        .rpc('use_credits', {
+          p_user_id: user.id,
+          p_amount: amount,
+          p_reason: reason
+        })
         .single()
 
-      if (fetchError || !profile) {
-        console.error('Error fetching profile:', fetchError)
+      if (error) {
+        console.error('Error using credits (RPC):', error)
+        
+        // Fallback to old method if function doesn't exist yet
+        const { data: profile, error: fetchError } = await supabase
+          .from('profiles')
+          .select('credits')
+          .eq('id', user.id)
+          .single()
+
+        if (fetchError || !profile) {
+          console.error('Error fetching profile:', fetchError)
+          return false
+        }
+
+        const currentCredits = profile.credits || 0
+        
+        if (currentCredits < amount) {
+          console.log('Insufficient credits')
+          return false
+        }
+
+        // Deduct credits
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ credits: currentCredits - amount })
+          .eq('id', user.id)
+
+        if (updateError) {
+          console.error('Error updating credits:', updateError)
+          return false
+        }
+
+        // Log transaction
+        const { error: logError } = await supabase
+          .from('credit_transactions')
+          .insert({
+            user_id: user.id,
+            amount: -amount,
+            type: 'usage',
+            description: reason,
+            payment_status: 'completed'
+          })
+
+        if (logError) {
+          console.error('Error logging transaction:', logError)
+        }
+
+        return true
+      }
+
+      // Check if the operation was successful
+      if (!data?.success) {
+        console.log('Credit usage failed:', data?.error_message || 'Insufficient credits')
         return false
       }
 
-      const currentCredits = profile.credits || 0
-      
-      if (currentCredits < amount) {
-        console.log('Insufficient credits')
-        return false
-      }
-
-      // Deduct credits
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ credits: currentCredits - amount })
-        .eq('id', user.id)
-
-      if (updateError) {
-        console.error('Error updating credits:', updateError)
-        return false
-      }
-
-      // Log transaction
-      const { error: logError } = await supabase
-        .from('credit_transactions')
-        .insert({
-          user_id: user.id,
-          amount: -amount,
-          type: 'usage',
-          description: reason,
-          balance_after: currentCredits - amount
-        })
-
-      if (logError) {
-        console.error('Error logging transaction:', logError)
-      }
+      console.log('Credits used successfully:', {
+        dailyUsed: data.daily_used,
+        purchasedUsed: data.purchased_used,
+        dailyRemaining: data.daily_remaining,
+        purchasedRemaining: data.purchased_remaining
+      })
 
       return true
     } catch (error) {
@@ -136,6 +214,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await signOut()
     },
     getCredits,
+    getCreditBalance,
     useCredits
   }
 
