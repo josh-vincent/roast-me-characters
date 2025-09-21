@@ -37,57 +37,56 @@ export async function POST(request: NextRequest) {
       .select()
       .single();
 
-    // If waitlist table doesn't exist, use the users table as fallback
-    if (error && error.code === '42P01') { // Table doesn't exist
-      console.log('Waitlist table not found, using users table fallback');
-      
-      // Create a waitlist entry in the users table
-      const waitlistUserId = `waitlist-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
-      const { data: userData, error: userError } = await (supabase as any)
-        .from('roast_me_ai_users')
-        .insert({
-          id: waitlistUserId,
-          email: email.toLowerCase().trim(),
-          is_anonymous: false,
-          credits: 0,
-          images_created: 0,
-          plan: 'free' // Use free plan for compatibility
-        })
-        .select()
-        .single();
-      
-      if (userError) {
-        if (userError.code === '23505') { // Email already exists
-          return NextResponse.json(
-            { error: 'This email is already on the waitlist' },
-            { status: 409 }
-          );
-        }
-        throw userError;
-      }
-      
-      data = userData;
-      error = null;
-    }
-
+    // Handle specific error codes
     if (error) {
       console.error('Waitlist signup error:', error);
+      
+      // Check for duplicate email error
       if (error.code === '23505') { // Unique violation
         return NextResponse.json(
           { error: 'This email is already on the waitlist' },
           { status: 409 }
         );
       }
-      // Return more specific error information for debugging
-      return NextResponse.json(
-        { 
-          error: 'Failed to join waitlist. Please try again.',
-          details: error.message,
-          code: error.code 
-        },
-        { status: 500 }
-      );
+      
+      // Check if table doesn't exist
+      if (error.code === '42P01') { // Table doesn't exist
+        console.log('Waitlist table not found, creating fallback entry');
+        
+        // Try to create the waitlist table first
+        try {
+          await (supabase as any).rpc('create_waitlist_table').single();
+        } catch (createError) {
+          console.log('Could not create waitlist table:', createError);
+        }
+        
+        // Retry the insert after potentially creating the table
+        const retryResult = await (supabase as any)
+          .from('roast_me_ai_waitlist')
+          .insert({
+            email: email.toLowerCase().trim(),
+            source: source as 'web' | 'mobile' | 'social',
+          })
+          .select()
+          .single();
+        
+        if (!retryResult.error) {
+          data = retryResult.data;
+          error = null;
+        } else {
+          // If still fails, return a generic error
+          return NextResponse.json(
+            { error: 'Unable to join waitlist at this time. Please try again later.' },
+            { status: 500 }
+          );
+        }
+      } else {
+        // Return generic error without exposing details
+        return NextResponse.json(
+          { error: 'Failed to join waitlist. Please try again.' },
+          { status: 500 }
+        );
+      }
     }
 
     return NextResponse.json(

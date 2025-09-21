@@ -141,19 +141,10 @@ export function MobileAppWaitlist() {
             </form>
           )}
           
-          <div className="mt-8 flex items-center justify-center gap-6 text-sm text-gray-500">
-            <div className="flex items-center gap-2">
-              <span className="text-green-500">✓</span>
-              <span>No spam, ever</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-green-500">✓</span>
-              <span>Early access</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-green-500">✓</span>
-              <span>Special launch offers</span>
-            </div>
+          <div className="mt-8 text-center">
+            <p className="text-sm text-gray-600">
+              📬 Get roast reminders and updates
+            </p>
           </div>
         </div>
       </div>
