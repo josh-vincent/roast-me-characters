@@ -11,14 +11,7 @@ export async function GET(
     
     const { data: character, error } = await supabase
       .from('roast_me_ai_characters')
-      .select(`
-        *,
-        image:image_id (
-          id,
-          file_url,
-          file_name
-        )
-      `)
+      .select('*')
       .eq('id', id)
       .single();
     

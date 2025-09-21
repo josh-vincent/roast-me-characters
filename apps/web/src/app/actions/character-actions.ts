@@ -109,6 +109,9 @@ export async function generateCharacter(formData: FormData): Promise<CharacterGe
 
     // Generate character image in background
     generateCharacterImageAsync(characterId, originalUrl, analysisResult, roastContent)
+      .catch(error => {
+        console.error('Background generation error for character:', characterId, error)
+      })
     
     return { 
       success: true, 
@@ -261,11 +264,14 @@ async function generateCharacterImageAsync(
   analysis: ImageAnalysisResult,
   roastContent: RoastContent
 ) {
+  console.log('Starting async generation for character:', characterId)
+  
   try {
     const supabase = await createClient()
     
     // Update status to 'generating' to show we're actively working
-    await supabase
+    console.log('Updating status to generating...')
+    const { error: updateError } = await supabase
       .from('roast_me_ai_characters')
       .update({
         generation_params: {
@@ -277,7 +283,13 @@ async function generateCharacterImageAsync(
       })
       .eq('id', characterId)
     
+    if (updateError) {
+      console.error('Error updating status to generating:', updateError)
+      throw updateError
+    }
+    
     // Generate the character image
+    console.log('Calling generateCharacterImage...')
     const result = await generateCharacterImage(
       analysis.features,
       analysis,
@@ -285,6 +297,8 @@ async function generateCharacterImageAsync(
       roastContent,
       characterId
     )
+    
+    console.log('Image generation result:', result ? 'Success' : 'Failed')
     
     const generatedUrl = result?.original || null
     
