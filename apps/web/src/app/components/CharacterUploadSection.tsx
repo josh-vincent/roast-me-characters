@@ -89,12 +89,10 @@ export function CharacterUploadSection() {
         <div className="max-w-4xl mx-auto">
           {/* Upload Card */}
           <div className="bg-gradient-to-br from-purple-50 via-white to-blue-50 rounded-3xl border border-gray-200 overflow-hidden">
-            <div className="p-12">
-              <div className="text-center mb-8">
-                
-                
-                {/* Credits Display - Always visible */}
-                <div className="inline-flex items-center bg-white rounded-full px-4 py-2 shadow-sm border border-gray-200 mb-4">
+            <div className="p-8">
+              {/* Credits Display - Above upload */}
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center bg-white rounded-full px-4 py-2 shadow-sm border border-gray-200">
                   <div className="flex items-center space-x-2">
                     <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
                       <span className="text-purple-600 font-bold text-xs">🔥</span>
@@ -134,6 +132,7 @@ export function CharacterUploadSection() {
                 </div>
               </div>
               
+              {/* Upload Area */}
               <ImageUploadWithUrl onUpload={handleUpload} isLoading={isProcessing} />
               
               {error && (

@@ -214,7 +214,7 @@ export function ImageUploadWithUrl({
           {inputMode === 'file' ? (
             <label
               className={clsx(
-                'relative flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer transition-all',
+                'relative flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer transition-all',
                 isDragging
                   ? 'border-blue-500 bg-blue-50'
                   : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50',
@@ -225,13 +225,13 @@ export function ImageUploadWithUrl({
               onDragOver={handleDragOver}
               onDrop={handleDrop}
             >
-              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+              <div className="flex flex-col items-center justify-center py-4">
                 {isDragging ? (
-                  <ImageIcon className="w-12 h-12 mb-3 text-blue-500" />
+                  <ImageIcon className="w-8 h-8 mb-2 text-blue-500" />
                 ) : (
-                  <Upload className="w-12 h-12 mb-3 text-gray-400" />
+                  <Upload className="w-8 h-8 mb-2 text-gray-400" />
                 )}
-                <p className="mb-2 text-sm text-gray-500">
+                <p className="mb-1 text-sm text-gray-500">
                   <span className="font-semibold">Click to upload</span> or drag and drop
                 </p>
                 <p className="text-xs text-gray-500">
@@ -277,59 +277,6 @@ export function ImageUploadWithUrl({
                     <ArrowRight className="w-5 h-5" />
                   </button>
                 </div>
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-medium text-gray-700 mb-3">Try these examples:</p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-sm mx-auto">
-                  <button
-                    onClick={() => setUrlInput('https://images.unsplash.com/photo-1530785602389-07594beb8b73?w=400')}
-                    className="group relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200 hover:border-purple-400 transition-all duration-200"
-                  >
-                    <img 
-                      src="https://m.media-amazon.com/images/M/MV5BZjA3NzZiZDktZjc2My00MzY2LThhOWMtZGFjYzg4ZDI2ZWVmXkEyXkFqcGc@._V1_FMjpg_UX1080_.jpg" 
-                      alt="Johnny Depp style" 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-end">
-                      <div className="w-full bg-gradient-to-t from-black to-transparent p-2 text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                        Johnny Depp
-                      </div>
-                    </div>
-                  </button>
-                  
-                  <button
-                    onClick={() => setUrlInput('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400')}
-                    className="group relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200 hover:border-purple-400 transition-all duration-200"
-                  >
-                    <img 
-                      src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400" 
-                      alt="Elon Musk style" 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-end">
-                      <div className="w-full bg-gradient-to-t from-black to-transparent p-2 text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                        Elon Musk
-                      </div>
-                    </div>
-                  </button>
-                  
-                  <button
-                    onClick={() => setUrlInput('https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400')}
-                    className="group relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200 hover:border-purple-400 transition-all duration-200"
-                  >
-                    <img 
-                      src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400" 
-                      alt="Britney Spears style" 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-end">
-                      <div className="w-full bg-gradient-to-t from-black to-transparent p-2 text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                        Britney Spears
-                      </div>
-                    </div>
-                  </button>
-                </div>
-                <p className="text-xs text-gray-500 mt-2">Click any image to use as an example</p>
               </div>
             </div>
           )}

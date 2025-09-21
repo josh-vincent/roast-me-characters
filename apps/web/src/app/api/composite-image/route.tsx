@@ -55,19 +55,19 @@ export async function GET(request: NextRequest) {
             </div>
           )}
           
-          {/* Original Image Overlay - Bottom Left (larger, no text) */}
+          {/* Original Image Overlay - Bottom Right (1/4 size) */}
           {originalImage && (
             <div
               style={{
                 position: 'absolute',
-                bottom: '40px',
-                left: '40px',
-                width: '280px',
-                height: '280px',
+                bottom: '0',
+                right: '0',
+                width: '270px',  // 1/4 of 1080px
+                height: '270px', // 1/4 of 1080px
                 background: 'white',
-                borderRadius: '16px',
-                padding: '8px',
-                boxShadow: '0 12px 48px rgba(0,0,0,0.3)',
+                borderRadius: '0',
+                border: '2px solid white',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -80,24 +80,23 @@ export async function GET(request: NextRequest) {
                   width: '100%',
                   height: '100%',
                   objectFit: 'cover',
-                  borderRadius: '12px',
                 }}
               />
             </div>
           )}
           
-          {/* Top Banner */}
+          {/* Banner positioned lower on image */}
           <div
             style={{
               position: 'absolute',
-              top: '0',
+              top: '15%',
               left: '0',
               right: '0',
               background: 'linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 100%)',
               padding: '24px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
+              justifyContent: 'center',
               borderBottom: '4px solid rgba(255,165,0,0.6)',
             }}
           >

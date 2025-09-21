@@ -33,6 +33,8 @@ export function FullScreenImageModal({
   const [isZoomed, setIsZoomed] = useState(false);
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [controlsVisible, setControlsVisible] = useState(true);
+  const [hideTimeout, setHideTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -42,9 +44,10 @@ export function FullScreenImageModal({
       document.body.style.width = '100%';
       document.body.style.height = '100%';
       
-      // Reset zoom when opening
+      // Reset states when opening
       setIsZoomed(false);
       setImageLoaded(false);
+      setControlsVisible(true);
     } else {
       document.body.style.overflow = '';
       document.body.style.position = '';
@@ -57,6 +60,10 @@ export function FullScreenImageModal({
       document.body.style.position = '';
       document.body.style.width = '';
       document.body.style.height = '';
+      // Clear timeout on cleanup
+      if (hideTimeout) {
+        clearTimeout(hideTimeout);
+      }
     };
   }, [isOpen]);
 
@@ -107,12 +114,33 @@ export function FullScreenImageModal({
     setIsZoomed(!isZoomed);
   };
 
+  // Handle showing/hiding controls
+  const handleInteraction = () => {
+    // Toggle controls visibility
+    setControlsVisible(!controlsVisible);
+    
+    // Clear existing timeout
+    if (hideTimeout) {
+      clearTimeout(hideTimeout);
+    }
+    
+    // If we're showing controls, hide them after 3 seconds
+    if (!controlsVisible) {
+      const timeout = setTimeout(() => {
+        setControlsVisible(false);
+      }, 3000);
+      setHideTimeout(timeout);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black">
-      {/* Header with controls */}
-      <div className="absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/80 to-transparent p-4">
+      {/* Header with controls - show/hide based on controlsVisible */}
+      <div className={`absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/80 to-transparent p-4 transition-opacity duration-300 ${
+        controlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      }`}>
         <div className="flex items-center justify-between">
           <div className="flex-1">
             {title && (
@@ -174,9 +202,9 @@ export function FullScreenImageModal({
       <div 
         className="absolute inset-0 flex items-center justify-center p-0 sm:p-8"
         onClick={(e) => {
-          // Close modal if clicking the background (not the image)
+          // Toggle controls on background click
           if (e.target === e.currentTarget) {
-            onClose();
+            handleInteraction();
           }
         }}
       >
@@ -187,6 +215,7 @@ export function FullScreenImageModal({
           style={{
             touchAction: 'manipulation',
           }}
+          onClick={handleInteraction}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
           onDoubleClick={handleDoubleClick}
@@ -198,7 +227,7 @@ export function FullScreenImageModal({
             </div>
           )}
           
-          {/* Main image */}
+          {/* Main generated image */}
           <img
             src={imageSrc}
             alt={imageAlt}
@@ -217,49 +246,44 @@ export function FullScreenImageModal({
             }}
           />
           
-          {/* Original image overlay - fixed in bottom left */}
-          {originalImageSrc && imageLoaded && (
-            <div className="absolute bottom-8 left-8 w-64 h-64 sm:w-72 sm:h-72 bg-white rounded-2xl shadow-2xl p-2 pointer-events-none">
-              <img
-                src={originalImageSrc}
-                alt="Original"
-                className="w-full h-full object-cover rounded-xl"
-                onError={(e) => {
-                  // Hide overlay if original image fails to load
-                  const container = e.currentTarget.parentElement;
-                  if (container) {
-                    container.style.display = 'none';
-                  }
-                }}
-              />
+          {/* Banner positioned lower on the image */}
+          {showBanner && (
+            <div className="absolute top-[15%] left-0 right-0 bg-gradient-to-b from-black/95 to-black/85 px-4 py-3 flex items-center justify-center border-b-4 border-orange-500/60">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🔥</span>
+                <span className="text-white font-bold text-lg tracking-wide">roastme.tocld.com</span>
+              </div>
             </div>
           )}
           
-          {/* Top banner */}
-          {showBanner && (
-            <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/90 to-black/70 backdrop-blur-sm px-6 py-4 pointer-events-none">
-              <div className="flex items-center justify-center gap-3">
-                <span className="text-3xl">🔥</span>
-                <span className="text-white text-xl sm:text-2xl font-bold tracking-wide">
-                  roastme.tocld.com
-                </span>
-              </div>
+          {/* Original image overlay - 1/4 size, bottom right corner */}
+          {originalImageSrc && showBanner && (
+            <div className="absolute bottom-0 right-0 w-[25%] h-[25%] border-2 border-white shadow-lg">
+              <img
+                src={originalImageSrc}
+                alt="Original"
+                className="w-full h-full object-cover"
+              />
             </div>
           )}
         </div>
       </div>
 
       {/* Bottom instructions - mobile only */}
-      <div className="absolute bottom-0 left-0 right-0 sm:hidden bg-gradient-to-t from-black/80 to-transparent p-4">
+      <div className={`absolute bottom-0 left-0 right-0 sm:hidden bg-gradient-to-t from-black/80 to-transparent p-4 transition-opacity duration-300 ${
+        controlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      }`}>
         <div className="text-center text-white/80 text-sm">
-          <p>Tap to zoom • Swipe to close</p>
+          <p>Tap to show/hide controls</p>
         </div>
       </div>
 
       {/* Desktop instructions */}
-      <div className="hidden sm:block absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white/60 text-sm">
+      <div className={`hidden sm:block absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white/60 text-sm transition-opacity duration-300 ${
+        controlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      }`}>
         <div className="flex items-center space-x-4">
-          <span>Click image or use zoom buttons</span>
+          <span>Click to show/hide controls</span>
           <span>•</span>
           <span>Press ESC to close</span>
         </div>
