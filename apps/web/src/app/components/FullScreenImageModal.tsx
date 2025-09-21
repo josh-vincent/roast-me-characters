@@ -198,78 +198,53 @@ export function FullScreenImageModal({
             </div>
           )}
           
-          {/* Try composite image when we have an original, fallback to banner image */}
-          {originalImageSrc && originalImageSrc.includes('/storage/v1/object/public/roast-me-ai/') ? (
-            <>
-              {/* Low quality placeholder - use the cached main image */}
+          {/* Main image */}
+          <img
+            src={imageSrc}
+            alt={imageAlt}
+            className={`w-full h-full object-contain transition-opacity duration-300 ${
+              imageLoaded ? 'opacity-100' : 'opacity-0'
+            }`}
+            onLoad={() => setImageLoaded(true)}
+            onError={(e) => {
+              console.error('Failed to load full-screen image:', imageSrc);
+              // Try without any transformations if it fails
+              const img = e.currentTarget as HTMLImageElement;
+              if (imageSrc.includes('/render/image/')) {
+                const originalUrl = imageSrc.replace('/render/image/', '/object/').split('?')[0];
+                img.src = originalUrl;
+              }
+            }}
+          />
+          
+          {/* Original image overlay - fixed in bottom left */}
+          {originalImageSrc && imageLoaded && (
+            <div className="absolute bottom-8 left-8 w-64 h-64 sm:w-72 sm:h-72 bg-white rounded-2xl shadow-2xl p-2 pointer-events-none">
               <img
-                src={imageSrc}
-                alt="Loading..."
-                className="w-full h-full object-contain blur-sm transition-opacity duration-300"
-                style={{ opacity: imageLoaded ? '0' : '1' }}
-              />
-              
-              {/* High quality composite image with before/after and banner */}
-              <img
-                src={`/api/composite-image?main=${encodeURIComponent(imageSrc)}&original=${encodeURIComponent(originalImageSrc)}${
-                  title ? `&title=${encodeURIComponent(title)}` : ''
-                }${
-                  figurineName ? `&figurine=${encodeURIComponent(figurineName)}` : ''
-                }`}
-                alt={imageAlt}
-                className="w-full h-full object-contain transition-opacity duration-300"
-                style={{
-                  opacity: imageLoaded ? '1' : '0'
-                }}
-                onLoad={() => setImageLoaded(true)}
-                onError={() => {
-                  // Hide this image and fall through to show banner version
-                  const container = document.getElementById('banner-fallback');
+                src={originalImageSrc}
+                alt="Original"
+                className="w-full h-full object-cover rounded-xl"
+                onError={(e) => {
+                  // Hide overlay if original image fails to load
+                  const container = e.currentTarget.parentElement;
                   if (container) {
-                    container.style.display = 'block';
+                    container.style.display = 'none';
                   }
-                  setImageLoaded(true);
                 }}
-              />
-              
-              {/* Fallback to banner version if composite fails */}
-              <div 
-                id="banner-fallback" 
-                className="w-full h-full"
-                style={{ display: 'none' }}
-              >
-                <ImageWithBanner
-                  src={imageSrc}
-                  alt={imageAlt}
-                  fill
-                  className="object-contain"
-                  showBanner={true}
-                  priority
-                  sizes="100vw"
-                />
-              </div>
-            </>
-          ) : showBanner ? (
-            <div className="relative w-full h-full" onLoad={() => setImageLoaded(true)}>
-              <ImageWithBanner
-                src={imageSrc}
-                alt={imageAlt}
-                fill
-                className="object-contain"
-                showBanner={true}
-                priority
-                sizes="100vw"
               />
             </div>
-          ) : (
-            <img
-              src={imageSrc}
-              alt={imageAlt}
-              className={`w-full h-full object-contain transition-opacity duration-300 ${
-                imageLoaded ? 'opacity-100' : 'opacity-0'
-              }`}
-              onLoad={() => setImageLoaded(true)}
-            />
+          )}
+          
+          {/* Top banner */}
+          {showBanner && (
+            <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/90 to-black/70 backdrop-blur-sm px-6 py-4 pointer-events-none">
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-3xl">🔥</span>
+                <span className="text-white text-xl sm:text-2xl font-bold tracking-wide">
+                  roastme.tocld.com
+                </span>
+              </div>
+            </div>
           )}
         </div>
       </div>
