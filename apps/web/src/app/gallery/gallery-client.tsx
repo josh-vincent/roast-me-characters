@@ -46,7 +46,7 @@ export function GalleryClient({ initialCharacters, isUserGallery, userId }: Gall
     try {
       let query = supabase
         .from('roast_me_ai_characters')
-        .select('id,seo_slug,og_title,og_description,model_url,thumbnail_url,medium_url,view_count,likes,created_at,is_public,generation_params,image:image_id(file_url)')
+        .select('id,seo_slug,og_title,og_description,model_url,thumbnail_url,medium_url,view_count,likes,created_at,is_public,generation_params,image_id')
         .order('created_at', { ascending: false })
         .range(characters.length, characters.length + 23);
 
@@ -84,9 +84,14 @@ export function GalleryClient({ initialCharacters, isUserGallery, userId }: Gall
             }
           }
 
+          // Try to get original image from generation_params if available
+          if (!originalImageUrl && char.generation_params?.original_image_url) {
+            originalImageUrl = char.generation_params.original_image_url;
+          }
+
           return {
             ...char,
-            image: Array.isArray(char.image) ? char.image[0] : char.image || (originalImageUrl ? { file_url: originalImageUrl } : undefined),
+            image: originalImageUrl ? { file_url: originalImageUrl } : undefined,
             features: char.generation_params?.features || []
           } as Character;
         });
@@ -112,7 +117,7 @@ export function GalleryClient({ initialCharacters, isUserGallery, userId }: Gall
     try {
       let query = supabase
         .from('roast_me_ai_characters')
-        .select('id,seo_slug,og_title,og_description,model_url,thumbnail_url,medium_url,view_count,likes,created_at,is_public,generation_params,image:image_id(file_url)')
+        .select('id,seo_slug,og_title,og_description,model_url,thumbnail_url,medium_url,view_count,likes,created_at,is_public,generation_params,image_id')
         .eq('user_id', userId!)
         .order('created_at', { ascending: false })
         .limit(24);
@@ -145,9 +150,14 @@ export function GalleryClient({ initialCharacters, isUserGallery, userId }: Gall
           }
         }
 
+        // Try to get original image from generation_params if available
+        if (!originalImageUrl && char.generation_params?.original_image_url) {
+          originalImageUrl = char.generation_params.original_image_url;
+        }
+
         return {
           ...char,
-          image: Array.isArray(char.image) ? char.image[0] : char.image || (originalImageUrl ? { file_url: originalImageUrl } : undefined),
+          image: originalImageUrl ? { file_url: originalImageUrl } : undefined,
           features: char.generation_params?.features || []
         } as Character;
       });

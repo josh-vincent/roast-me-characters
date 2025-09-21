@@ -10,7 +10,7 @@ async function getUserCharacters(userId: string) {
   
   const { data: characters, error } = await supabase
     .from('roast_me_ai_characters')
-    .select('id,seo_slug,og_title,og_description,model_url,thumbnail_url,medium_url,view_count,likes,created_at,is_public,generation_params,image:image_id(file_url)')
+    .select('id,seo_slug,og_title,og_description,model_url,thumbnail_url,medium_url,view_count,likes,created_at,is_public,generation_params,image_id')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(24);
@@ -28,7 +28,7 @@ async function getPublicCharacters(limit: number = 50) {
   
   const { data: characters, error } = await supabase
     .from('roast_me_ai_characters')
-    .select('id,seo_slug,og_title,og_description,model_url,thumbnail_url,medium_url,view_count,likes,created_at,is_public,generation_params,image:image_id(file_url)')
+    .select('id,seo_slug,og_title,og_description,model_url,thumbnail_url,medium_url,view_count,likes,created_at,is_public,generation_params,image_id')
     // Show all characters by default - removing is_public filter since most characters should be public
     // Only filter out explicitly private characters
     .or('is_public.eq.true,is_public.is.null')
@@ -67,9 +67,14 @@ export default async function GalleryPage() {
       }
     }
 
+    // Try to get original image from generation_params if available
+    if (!originalImageUrl && char.generation_params?.original_image_url) {
+      originalImageUrl = char.generation_params.original_image_url;
+    }
+
     return {
       ...char,
-      image: Array.isArray(char.image) ? char.image[0] : char.image || (originalImageUrl ? { file_url: originalImageUrl } : undefined),
+      image: originalImageUrl ? { file_url: originalImageUrl } : undefined,
       features: char.generation_params?.features || []
     };
   });
