@@ -88,7 +88,8 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
     // Check if we've exceeded 30 seconds
     const checkTimeout = () => {
       const elapsed = Date.now() - generationStartTime;
-      if (elapsed > 30000 && !hasTimedOut) {
+      // Increased timeout to 60 seconds for slower generation times
+      if (elapsed > 60000 && !hasTimedOut) {
         setHasTimedOut(true);
         // Only auto-redirect if we have a valid seo_slug
         if (character.seo_slug) {
@@ -232,18 +233,15 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
                     {character.seo_slug ? 'You\'ll be redirected shortly...' : 'The image is still being generated in the background.'}
                   </p>
                 </div>
-                <button
-                  onClick={() => {
-                    const slug = character.seo_slug || character.id;
-                    router.push(`/character/${slug}`);
-                  }}
+                <a
+                  href={`/character/${character.seo_slug || character.id}`}
                   className="bg-orange-600 hover:bg-orange-700 text-white font-medium py-3 px-6 rounded-lg transition-colors inline-flex items-center gap-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
                   View Character Page
-                </button>
+                </a>
                 <p className="text-xs text-gray-500">
                   Your roast is ready! The image will appear when it's done generating.
                 </p>

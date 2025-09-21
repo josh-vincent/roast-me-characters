@@ -2,7 +2,8 @@ import { createClient } from '@/lib/supabase/server';
 import { GalleryClient } from './gallery-client';
 import Link from 'next/link';
 
-export const revalidate = 60; // Revalidate every minute for fresh content
+export const revalidate = 0; // Always fetch fresh data
+export const dynamic = 'force-dynamic'; // Force dynamic rendering
 
 async function getUserCharacters(userId: string) {
   const supabase = await createClient();
@@ -29,7 +30,7 @@ async function getPublicCharacters(limit: number = 50) {
     .from('roast_me_ai_characters')
     .select('id,seo_slug,og_title,og_description,model_url,thumbnail_url,medium_url,view_count,likes,created_at,is_public,generation_params,image:image_id(file_url)')
     .eq('is_public', true)
-    .not('model_url', 'is', null)
+    // Removed the model_url filter to show characters that are still generating
     .order('created_at', { ascending: false })
     .limit(limit);
 

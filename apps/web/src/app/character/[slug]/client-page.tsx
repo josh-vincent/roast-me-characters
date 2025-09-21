@@ -182,7 +182,7 @@ export default function CharacterPageClient({ slug, initialCharacter, initialErr
               </a>
               <nav className="hidden md:flex items-center space-x-6">
                 <a href="/" className="text-gray-600 hover:text-gray-900 text-sm font-medium">Create</a>
-                <a href="#" className="text-gray-600 hover:text-gray-900 text-sm font-medium">Gallery</a>
+                <a href="/gallery" className="text-gray-600 hover:text-gray-900 text-sm font-medium">Gallery</a>
               </nav>
             </div>
             <div className="flex items-center space-x-3">
