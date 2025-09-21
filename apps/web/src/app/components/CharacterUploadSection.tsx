@@ -162,54 +162,23 @@ export function CharacterUploadSection() {
         <div className="max-w-4xl mx-auto">
           <div className="bg-white rounded-3xl border border-gray-200 overflow-hidden">
             <div className="p-12 text-center">
-              <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-purple-100 via-purple-50 to-blue-50 rounded-full mb-8">
-                <div className="relative">
-                  <div className="w-12 h-12 border-4 border-purple-200 rounded-full animate-spin">
-                    <div className="absolute top-0 left-0 w-4 h-4 bg-purple-600 rounded-full"></div>
-                  </div>
-                </div>
-              </div>
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">Creating your roast</h2>
-              <p className="text-xl text-gray-600 mb-6">Our AI is hilariously exaggerating your features</p>
-              
-              <div className="max-w-md mx-auto mb-8">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm text-gray-500">Progress</span>
-                  <span className="text-sm text-purple-600 font-medium">Working...</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full animate-pulse w-3/4"></div>
-                </div>
+              {/* Simple Loading Animation */}
+              <div className="text-6xl mb-6 animate-pulse">
+                🔍
               </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-lg mx-auto mb-8">
-                <div className="flex flex-col items-center p-4 bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl">
-                  <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center mb-2">
-                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <span className="text-sm font-medium text-gray-700">Analyzing</span>
-                </div>
-                <div className="flex flex-col items-center p-4 bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl">
-                  <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center mb-2 animate-pulse">
-                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  </div>
-                  <span className="text-sm font-medium text-gray-700">Generating</span>
-                </div>
-                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-xl opacity-50">
-                  <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center mb-2">
-                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <span className="text-sm font-medium text-gray-500">Complete</span>
-                </div>
-              </div>
+              <h2 className="text-2xl font-bold mb-3 text-gray-900">
+                Analyzing Your Photo
+              </h2>
               
-              <p className="text-sm text-gray-500">This usually takes 15-30 seconds</p>
+              <p className="text-gray-600 mb-8">
+                Detecting features...
+              </p>
+              
+              {/* Simple spinner */}
+              <div className="flex justify-center">
+                <div className="w-16 h-16 border-4 border-purple-200 rounded-full animate-spin border-t-purple-600"></div>
+              </div>
             </div>
           </div>
         </div>

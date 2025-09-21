@@ -61,23 +61,6 @@ export function ImageUploadWithUrl({
     return true;
   };
 
-  const validateUrl = (url: string): boolean => {
-    try {
-      new URL(url);
-      const imageExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
-      const hasImageExtension = imageExtensions.some(ext => 
-        url.toLowerCase().includes(ext)
-      );
-      if (!hasImageExtension && !url.includes('unsplash') && !url.includes('pexels')) {
-        setError('URL should point to an image file');
-        return false;
-      }
-      return true;
-    } catch {
-      setError('Please enter a valid URL');
-      return false;
-    }
-  };
 
   const handleFile = useCallback(async (file: File) => {
     if (!validateFile(file)) return;
@@ -99,6 +82,24 @@ export function ImageUploadWithUrl({
     
     onUpload(file);
   }, [onUpload, maxSize, acceptedTypes]);
+
+  const validateUrl = (url: string): boolean => {
+    try {
+      new URL(url);
+      const imageExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+      const hasImageExtension = imageExtensions.some(ext => 
+        url.toLowerCase().includes(ext)
+      );
+      if (!hasImageExtension && !url.includes('unsplash') && !url.includes('pexels')) {
+        setError('URL should point to an image file');
+        return false;
+      }
+      return true;
+    } catch {
+      setError('Please enter a valid URL');
+      return false;
+    }
+  };
 
   const handleUrl = useCallback(() => {
     if (!urlInput.trim()) {
@@ -181,42 +182,12 @@ export function ImageUploadWithUrl({
         </div>
       ) : (
         <div>
-          {/* Mode Switcher */}
-          <div className="flex rounded-lg overflow-hidden mb-4 border border-gray-200">
-            <button
-              onClick={() => setInputMode('file')}
-              className={clsx(
-                'flex-1 py-2 px-4 text-sm font-medium transition-colors',
-                inputMode === 'file'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              )}
-              disabled={isLoading}
-            >
-              <Upload className="w-4 h-4 inline mr-2" />
-              Upload File
-            </button>
-            <button
-              onClick={() => setInputMode('url')}
-              className={clsx(
-                'flex-1 py-2 px-4 text-sm font-medium transition-colors',
-                inputMode === 'url'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              )}
-              disabled={isLoading}
-            >
-              <Link className="w-4 h-4 inline mr-2" />
-              Image URL
-            </button>
-          </div>
-
           {inputMode === 'file' ? (
             <label
               className={clsx(
                 'relative flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer transition-all',
                 isDragging
-                  ? 'border-blue-500 bg-blue-50'
+                  ? 'border-purple-500 bg-purple-50'
                   : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50',
                 isLoading && 'opacity-50 cursor-not-allowed'
               )}
@@ -227,12 +198,12 @@ export function ImageUploadWithUrl({
             >
               <div className="flex flex-col items-center justify-center py-4">
                 {isDragging ? (
-                  <ImageIcon className="w-8 h-8 mb-2 text-blue-500" />
+                  <ImageIcon className="w-8 h-8 mb-2 text-purple-500" />
                 ) : (
                   <Upload className="w-8 h-8 mb-2 text-gray-400" />
                 )}
                 <p className="mb-1 text-sm text-gray-500">
-                  <span className="font-semibold">Click to upload</span> or drag and drop
+                  <span className="font-semibold">Click to select</span> or drag and drop
                 </p>
                 <p className="text-xs text-gray-500">
                   PNG, JPG, WebP, or HEIC (MAX. {maxSize / 1024 / 1024}MB)
@@ -241,45 +212,72 @@ export function ImageUploadWithUrl({
               <input
                 type="file"
                 className="hidden"
-                accept={acceptedTypes.join(',')}
+                accept="image/*"
                 onChange={handleFileSelect}
                 disabled={isLoading}
                 multiple={false}
               />
             </label>
           ) : (
-            <div className="space-y-4">
-              <div className="flex flex-col space-y-2">
-                <label htmlFor="image-url" className="text-sm font-medium text-gray-700">
-                  Enter Image URL
-                </label>
-                <div className="flex space-x-2">
-                  <input
-                    id="image-url"
-                    type="url"
-                    value={urlInput}
-                    onChange={(e) => setUrlInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleUrl()}
-                    placeholder="https://example.com/image.jpg"
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    disabled={isLoading}
-                  />
-                  <button
-                    onClick={handleUrl}
-                    disabled={isLoading || !urlInput.trim()}
-                    className={clsx(
-                      'px-4 py-2 rounded-lg font-medium transition-colors',
-                      isLoading || !urlInput.trim()
-                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        : 'bg-blue-500 text-white hover:bg-blue-600'
-                    )}
-                  >
-                    <ArrowRight className="w-5 h-5" />
-                  </button>
-                </div>
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleUrl()}
+                  placeholder="https://example.com/image.jpg"
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                  disabled={isLoading}
+                />
+                <button
+                  onClick={handleUrl}
+                  disabled={isLoading || !urlInput.trim()}
+                  className={clsx(
+                    'px-4 py-3 rounded-lg font-medium transition-colors',
+                    isLoading || !urlInput.trim()
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-purple-600 text-white hover:bg-purple-700'
+                  )}
+                >
+                  <ArrowRight className="w-5 h-5" />
+                </button>
               </div>
+              <p className="text-xs text-gray-500 text-center">
+                Paste any image URL from the web
+              </p>
             </div>
           )}
+          
+          {/* Mode Switcher Below Content */}
+          <div className="flex gap-2 mt-4">
+            <button
+              onClick={() => setInputMode('file')}
+              className={clsx(
+                'flex-1 py-2 px-4 text-sm font-medium rounded-lg transition-colors',
+                inputMode === 'file'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              )}
+              disabled={isLoading}
+            >
+              <Upload className="w-4 h-4 inline mr-2" />
+              Upload Image
+            </button>
+            <button
+              onClick={() => setInputMode('url')}
+              className={clsx(
+                'flex-1 py-2 px-4 text-sm font-medium rounded-lg transition-colors',
+                inputMode === 'url'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              )}
+              disabled={isLoading}
+            >
+              <Link className="w-4 h-4 inline mr-2" />
+              Use URL
+            </button>
+          </div>
         </div>
       )}
       {error && (

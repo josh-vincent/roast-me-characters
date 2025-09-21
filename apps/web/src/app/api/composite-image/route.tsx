@@ -85,11 +85,11 @@ export async function GET(request: NextRequest) {
             </div>
           )}
           
-          {/* Banner positioned lower on image */}
+          {/* Banner across top of image */}
           <div
             style={{
               position: 'absolute',
-              top: '15%',
+              top: '0',
               left: '0',
               right: '0',
               background: 'linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 100%)',

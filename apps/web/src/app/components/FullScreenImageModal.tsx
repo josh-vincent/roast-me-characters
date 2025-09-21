@@ -246,9 +246,9 @@ export function FullScreenImageModal({
             }}
           />
           
-          {/* Banner positioned lower on the image */}
+          {/* Banner across top of image - responsive positioning */}
           {showBanner && (
-            <div className="absolute top-[15%] left-0 right-0 bg-gradient-to-b from-black/95 to-black/85 px-4 py-3 flex items-center justify-center border-b-4 border-orange-500/60">
+            <div className="absolute top-0 sm:top-[8%] left-0 right-0 bg-gradient-to-b from-black/95 to-black/85 px-4 py-3 flex items-center justify-center border-b-4 border-orange-500/60">
               <div className="flex items-center gap-2">
                 <span className="text-2xl">🔥</span>
                 <span className="text-white font-bold text-lg tracking-wide">roastme.tocld.com</span>
