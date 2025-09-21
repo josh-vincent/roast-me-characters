@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ImageWithBanner } from './ImageWithBanner';
 import { FullScreenImageModal } from './FullScreenImageModal';
+import { SafeImage } from '@/components/SafeImage';
 
 interface Character {
   id: string;
@@ -44,6 +45,26 @@ export function CharacterCard({ character, showPrivacyBadge = false }: Character
   const [isFullScreenOpen, setIsFullScreenOpen] = useState(false);
   const isGenerating = character.generation_params?.status === 'generating';
   const isFailed = character.generation_params?.status === 'failed';
+  
+  // Extract the original image URL from various possible locations
+  const originalImageUrl = character.image?.file_url || 
+    (character.generation_params as any)?.original_image_url ||
+    (() => {
+      // Try to extract from composite_og_url if available
+      if ((character.generation_params as any)?.composite_og_url) {
+        try {
+          const url = new URL((character.generation_params as any).composite_og_url);
+          const original = url.searchParams.get('original');
+          return original ? decodeURIComponent(original) : null;
+        } catch {
+          return null;
+        }
+      }
+      return null;
+    })();
+  
+  // Get the best available image URL
+  const mainImageUrl = character.thumbnail_url || character.medium_url || character.model_url;
   
   const handleImageClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -91,31 +112,38 @@ export function CharacterCard({ character, showPrivacyBadge = false }: Character
                 <p className="text-xs font-medium">Generation Failed</p>
               </div>
             </div>
-          ) : character.model_url ? (
+          ) : mainImageUrl ? (
             // Completed with image - show generated image as main, original as overlay
             <div className="relative w-full h-full">
-              <ImageWithBanner
-                src={character.thumbnail_url || character.medium_url || character.model_url}
+              <SafeImage
+                src={mainImageUrl}
+                fallbackSrc={character.model_url}
                 alt={character.generation_params?.roast_content 
                   ? `${character.generation_params.roast_content.title} - ${character.generation_params.roast_content.figurine_name}`
                   : character.og_title || 'Generated character'}
                 fill
-                className="transition-transform duration-200 group-hover:scale-110"
+                className="transition-transform duration-200 group-hover:scale-110 object-cover"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                showBanner={true}
-                bannerText="roastme.tocld.com"
                 priority={false}
               />
               
+              {/* Domain watermark banner */}
+              <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/60 to-transparent p-2">
+                <div className="text-white text-xs font-medium text-center">
+                  🔥 roastme.tocld.com
+                </div>
+              </div>
+              
               {/* Original Image Overlay - Bottom Left, smaller size for cards */}
-              {character.image?.file_url && (
+              {originalImageUrl && (
                 <div className="absolute bottom-2 left-2 w-1/5 aspect-square bg-white rounded-md overflow-hidden shadow-lg border border-white/90">
-                  <Image
-                    src={character.image.file_url}
+                  <SafeImage
+                    src={originalImageUrl}
                     alt="Original image"
                     fill
                     className="object-cover"
                     sizes="20vw"
+                    showLoadingState={false}
                   />
                   <div className="absolute inset-0 bg-black/5"></div>
                 </div>
@@ -214,16 +242,16 @@ export function CharacterCard({ character, showPrivacyBadge = false }: Character
       </div>
 
       {/* Full Screen Image Modal - Use composite with before/after */}
-      {character.model_url && (
+      {mainImageUrl && (
         <FullScreenImageModal
           isOpen={isFullScreenOpen}
           onClose={() => setIsFullScreenOpen(false)}
-          imageSrc={character.model_url} // Always use full resolution for modal
+          imageSrc={character.model_url || mainImageUrl} // Always use full resolution for modal
           imageAlt={character.generation_params?.roast_content 
             ? `${character.generation_params.roast_content.title} - ${character.generation_params.roast_content.punchline}`
             : character.og_title || 'Generated character'}
           title={character.generation_params?.roast_content?.title || character.og_title}
-          originalImageSrc={character.image?.file_url || (character.generation_params as any)?.original_image_url}
+          originalImageSrc={originalImageUrl}
           figurineName={character.generation_params?.roast_content?.figurine_name}
           showBanner={true}
         />

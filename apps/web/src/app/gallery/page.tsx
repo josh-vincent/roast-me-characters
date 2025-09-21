@@ -29,8 +29,9 @@ async function getPublicCharacters(limit: number = 50) {
   const { data: characters, error } = await supabase
     .from('roast_me_ai_characters')
     .select('id,seo_slug,og_title,og_description,model_url,thumbnail_url,medium_url,view_count,likes,created_at,is_public,generation_params,image:image_id(file_url)')
-    .eq('is_public', true)
-    // Removed the model_url filter to show characters that are still generating
+    // Show all characters by default - removing is_public filter since most characters should be public
+    // Only filter out explicitly private characters
+    .or('is_public.eq.true,is_public.is.null')
     .order('created_at', { ascending: false })
     .limit(limit);
 
