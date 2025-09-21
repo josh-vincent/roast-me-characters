@@ -75,9 +75,16 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
   useEffect(() => {
     const status = character.generation_params?.status;
     
-    if (status === 'completed' && character.seo_slug) {
-      // Redirect to the static character page
-      router.push(`/character/${character.seo_slug}`);
+    // If generation is completed, redirect immediately
+    if (status === 'completed') {
+      // Try to use seo_slug first, fallback to character ID
+      const slug = character.seo_slug || characterId;
+      console.log('Generation completed, redirecting to:', `/character/${slug}`);
+      
+      // Use window.location for more reliable redirect
+      setTimeout(() => {
+        window.location.href = `/character/${slug}`;
+      }, 500); // Small delay to ensure state is saved
       return;
     }
     
@@ -86,18 +93,17 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
       return;
     }
     
-    // Check if we've exceeded 30 seconds
+    // Check if we've exceeded 60 seconds
     const checkTimeout = () => {
       const elapsed = Date.now() - generationStartTime;
       // Increased timeout to 60 seconds for slower generation times
       if (elapsed > 60000 && !hasTimedOut) {
         setHasTimedOut(true);
-        // Only auto-redirect if we have a valid seo_slug
-        if (character.seo_slug) {
-          setTimeout(() => {
-            router.push(`/character/${character.seo_slug}`);
-          }, 3000); // Show timeout message for 3 seconds
-        }
+        // Auto-redirect even without seo_slug, using character ID
+        const slug = character.seo_slug || characterId;
+        setTimeout(() => {
+          window.location.href = `/character/${slug}`;
+        }, 3000); // Show timeout message for 3 seconds
       }
     };
     
@@ -125,11 +131,14 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
             }
             
             // Check if completed
-            if (data.character.generation_params?.status === 'completed' && data.character.seo_slug) {
+            if (data.character.generation_params?.status === 'completed') {
               clearInterval(timer);
+              // Use seo_slug if available, otherwise use character ID
+              const slug = data.character.seo_slug || data.character.id || characterId;
+              console.log('Polling detected completion, redirecting to:', `/character/${slug}`);
               // Small delay to show final state
               setTimeout(() => {
-                router.push(`/character/${data.character.seo_slug}`);
+                window.location.href = `/character/${slug}`;
               }, 1000);
             }
           }
@@ -241,7 +250,7 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
                 <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                   <p className="text-orange-800 text-sm mb-2">Generation is taking longer than expected.</p>
                   <p className="text-xs text-gray-600">
-                    {character.seo_slug ? 'You\'ll be redirected shortly...' : 'The image is still being generated in the background.'}
+                    The image is still being generated in the background. You can view your character now!
                   </p>
                 </div>
                 <button
@@ -250,12 +259,12 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
                     const slug = character.seo_slug || characterId;
                     window.location.href = `/character/${slug}`;
                   }}
-                  className="bg-orange-600 hover:bg-orange-700 text-white font-medium py-3 px-6 rounded-lg transition-colors inline-flex items-center gap-2"
+                  className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg inline-flex items-center gap-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
-                  View Character Page
+                  View Your Character
                 </button>
                 <p className="text-xs text-gray-500">
                   Your roast is ready! The image will appear when it's done generating.
