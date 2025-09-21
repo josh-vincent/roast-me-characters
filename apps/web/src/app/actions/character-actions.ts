@@ -145,6 +145,12 @@ export async function retryCharacterGeneration(characterId: string): Promise<Cha
 
     const params = character.generation_params as any
     
+    // Validate required params
+    if (!params || !params.features || !Array.isArray(params.features)) {
+      console.error('Invalid generation params for retry:', params)
+      return { success: false, error: 'Invalid character data for retry' }
+    }
+    
     // Retry image generation
     const result = await generateCharacterImage(
       params.features,

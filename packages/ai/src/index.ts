@@ -472,6 +472,12 @@ export async function generateCharacterImage(
   roastContent?: RoastContent,
   userId: string = 'demo-user-' + Date.now()
 ): Promise<{ original: string; thumbnail: string; medium: string } | null> {
+  // Validate features array
+  if (!features || !Array.isArray(features)) {
+    console.error('Invalid features array provided to generateCharacterImage');
+    return null;
+  }
+  
   // Create a detailed prompt based on the analyzed features
   const featureDescriptions = features
     .map(f => `${f.feature_name}: ${f.feature_value} with ${f.exaggeration_factor}/10 exaggeration`)
@@ -479,7 +485,7 @@ export async function generateCharacterImage(
 
   // Add user-selected roast features to the prompt
   let userFeatureDescriptions = '';
-  if (userRoastFeatures.length > 0) {
+  if (userRoastFeatures && Array.isArray(userRoastFeatures) && userRoastFeatures.length > 0) {
     userFeatureDescriptions = userRoastFeatures
       .map(f => `${f.name}: ${f.description} with intensity ${f.intensity}/5`)
       .join(', ');
