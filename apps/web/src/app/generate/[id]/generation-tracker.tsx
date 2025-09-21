@@ -44,6 +44,8 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
   const [character, setCharacter] = useState(initialCharacter);
   const [retryError, setRetryError] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [hasTimedOut, setHasTimedOut] = useState(false);
+  const [generationStartTime] = useState(Date.now());
   
   // Since roast is already generated when we get here, start at 'roasting' and show it immediately
   const hasRoastContent = initialCharacter.generation_params?.roast_content;
@@ -68,7 +70,7 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
     }
   }, [character.generation_params?.roast_content, character.model_url, generationStep]);
 
-  // Poll for updates while generating
+  // Poll for updates while generating with 30-second timeout
   useEffect(() => {
     const status = character.generation_params?.status;
     
@@ -78,9 +80,29 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
       return;
     }
     
+    // Check if we've exceeded 30 seconds
+    const checkTimeout = () => {
+      const elapsed = Date.now() - generationStartTime;
+      if (elapsed > 30000 && !hasTimedOut && character.seo_slug) {
+        setHasTimedOut(true);
+        // Redirect to character page even if not fully complete
+        setTimeout(() => {
+          router.push(`/character/${character.seo_slug}`);
+        }, 2000); // Show timeout message briefly
+      }
+    };
+    
     // Poll for any non-failed status (including 'pending' which is the initial status)
-    if (status === 'pending' || status === 'generating' || status === 'retrying' || !status) {
+    if ((status === 'pending' || status === 'generating' || status === 'retrying' || !status) && !hasTimedOut) {
       const timer = setInterval(async () => {
+        // Check timeout on each poll
+        checkTimeout();
+        
+        if (hasTimedOut) {
+          clearInterval(timer);
+          return;
+        }
+        
         try {
           const response = await fetch(`/api/character-status/${characterId}`);
           if (response.ok) {
@@ -109,7 +131,7 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
       
       return () => clearInterval(timer);
     }
-  }, [character.generation_params?.status, character.seo_slug, characterId, router, showRoast]);
+  }, [character.generation_params?.status, character.seo_slug, characterId, router, generationStep, hasTimedOut, generationStartTime]);
 
   const handleRetry = async () => {
     setIsRetrying(true);
@@ -159,7 +181,8 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
             
             {/* Current Step Title */}
             <h1 className="text-2xl font-bold mb-3 text-gray-900">
-              {generationStep === 'analyzing' ? 'Analyzing Your Photo' :
+              {hasTimedOut ? 'Taking longer than expected...' :
+               generationStep === 'analyzing' ? 'Analyzing Your Photo' :
                generationStep === 'roasting' ? 'Writing Your Roast' :
                generationStep === 'creating' ? 'Creating Your Character' :
                generationStep === 'finalizing' ? 'Almost Done!' :
@@ -169,7 +192,8 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
             
             {/* Current Step Description */}
             <p className="text-gray-600 mb-8">
-              {generationStep === 'analyzing' ? 'Detecting features...' :
+              {hasTimedOut ? 'Your character is still being created. Redirecting you to the character page...' :
+               generationStep === 'analyzing' ? 'Detecting features...' :
                generationStep === 'roasting' ? 'Cooking up savage jokes...' :
                generationStep === 'creating' ? 'Generating your caricature...' :
                generationStep === 'finalizing' ? 'Adding finishing touches...' :
@@ -178,7 +202,7 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
             </p>
 
             {/* Show roast content when available, but in a simpler way */}
-            {showRoast && character.generation_params?.roast_content && !isFailed && (
+            {showRoast && character.generation_params?.roast_content && !isFailed && !hasTimedOut && (
               <div className="mb-6 p-6 bg-orange-50 rounded-lg text-left animate-fade-in">
                 <p className="text-lg font-semibold text-orange-900 mb-2">
                   {character.generation_params.roast_content.title}
@@ -190,7 +214,12 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
             )}
 
             {/* Progress Indicator or Action */}
-            {!isFailed ? (
+            {hasTimedOut ? (
+              <div className="text-orange-600">
+                <p className="text-sm mb-2">Generation is taking longer than usual.</p>
+                <p className="text-xs text-gray-500">You'll be redirected shortly...</p>
+              </div>
+            ) : !isFailed ? (
               <div className="flex justify-center">
                 <div className="w-16 h-16 border-4 border-purple-200 rounded-full animate-spin border-t-purple-600"></div>
               </div>
