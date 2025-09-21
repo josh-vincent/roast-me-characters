@@ -73,55 +73,58 @@ export type Database = {
           id: string
           created_at: string
           image_id: string
-          user_id: string
-          model_url?: string
-          thumbnail_url?: string
-          medium_url?: string
-          og_title?: string
-          og_description?: string
-          og_image_url?: string
+          user_id: string | null
+          model_url?: string | null
+          thumbnail_url?: string | null
+          medium_url?: string | null
+          og_title?: string | null
+          og_description?: string | null
+          og_image_url?: string | null
           seo_slug: string
           is_public: boolean
           view_count: number
           likes: number
           ai_features_json?: any
           generation_params?: any
+          session_id?: string | null
         }
         Insert: {
           id?: string
           created_at?: string
           image_id: string
-          user_id: string
-          model_url?: string
-          thumbnail_url?: string
-          medium_url?: string
-          og_title?: string
-          og_description?: string
-          og_image_url?: string
+          user_id?: string | null
+          model_url?: string | null
+          thumbnail_url?: string | null
+          medium_url?: string | null
+          og_title?: string | null
+          og_description?: string | null
+          og_image_url?: string | null
           seo_slug: string
           is_public?: boolean
           view_count?: number
           likes?: number
           ai_features_json?: any
           generation_params?: any
+          session_id?: string | null
         }
         Update: {
           id?: string
           created_at?: string
           image_id?: string
-          user_id?: string
-          model_url?: string
-          thumbnail_url?: string
-          medium_url?: string
-          og_title?: string
-          og_description?: string
-          og_image_url?: string
+          user_id?: string | null
+          model_url?: string | null
+          thumbnail_url?: string | null
+          medium_url?: string | null
+          og_title?: string | null
+          og_description?: string | null
+          og_image_url?: string | null
           seo_slug?: string
           is_public?: boolean
           view_count?: number
           likes?: number
           ai_features_json?: any
           generation_params?: any
+          session_id?: string | null
         }
       }
       roast_me_ai_waitlist: {

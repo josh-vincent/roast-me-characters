@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { analyzeImageFeatures, generateRoast, generateCharacterImage } from '@roast-me/ai'
 import { redirect } from 'next/navigation'
 import type { ImageAnalysisResult, RoastContent, Character, GenerationParams } from '@/types/ai'
@@ -267,12 +268,13 @@ async function generateCharacterImageAsync(
   console.log('Starting async generation for character:', characterId)
   
   try {
-    const supabase = await createClient()
+    // Use service client for background operations
+    const supabase = createServiceClient()
     
     // Update status to 'generating' to show we're actively working
     console.log('Updating status to generating...')
-    const { error: updateError } = await supabase
-      .from('roast_me_ai_characters')
+    const { error: updateError } = await (supabase
+      .from('roast_me_ai_characters') as any)
       .update({
         generation_params: {
           ...analysis,
@@ -319,8 +321,8 @@ async function generateCharacterImageAsync(
       
       // Update the character with the generated image AND composite OG URL
       // IMPORTANT: Preserve the original_image_url when updating
-      await supabase
-        .from('roast_me_ai_characters')
+      await (supabase
+        .from('roast_me_ai_characters') as any)
         .update({
           model_url: generatedUrl,
           generation_params: {
@@ -336,9 +338,9 @@ async function generateCharacterImageAsync(
   } catch (error) {
     console.error('Background generation error:', error)
     // Update status to failed
-    const supabase = await createClient()
-    await supabase
-      .from('roast_me_ai_characters')
+    const supabase = createServiceClient()
+    await (supabase
+      .from('roast_me_ai_characters') as any)
       .update({
         generation_params: {
           status: 'failed',
