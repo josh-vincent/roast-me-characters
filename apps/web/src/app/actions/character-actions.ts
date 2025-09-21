@@ -109,10 +109,28 @@ export async function generateCharacter(formData: FormData): Promise<CharacterGe
     }
 
     // Generate character image in background
-    generateCharacterImageAsync(characterId, originalUrl, analysisResult, roastContent)
-      .catch(error => {
-        console.error('Background generation error for character:', characterId, error)
-      })
+    // Use Promise.resolve to ensure it runs even without await
+    Promise.resolve().then(() => 
+      generateCharacterImageAsync(characterId, originalUrl, analysisResult, roastContent)
+    ).catch(error => {
+      console.error('Background generation error for character:', characterId, error)
+      // Try to update status to failed so user knows
+      return (createServiceClient()
+        .from('roast_me_ai_characters') as any)
+        .update({
+          generation_params: {
+            ...analysisResult,
+            roast_content: roastContent,
+            original_image_url: originalUrl,
+            status: 'failed',
+            error: error instanceof Error ? error.message : 'Unknown error'
+          }
+        })
+        .eq('id', characterId)
+        .then(({ error: updateError }: any) => {
+          if (updateError) console.error('Failed to update status:', updateError);
+        });
+    })
     
     return { 
       success: true, 
@@ -349,6 +367,9 @@ async function generateCharacterImageAsync(
       .from('roast_me_ai_characters') as any)
       .update({
         generation_params: {
+          ...analysis,
+          roast_content: roastContent,
+          original_image_url: originalUrl,
           status: 'failed',
           error: error instanceof Error ? error.message : 'Unknown error'
         }

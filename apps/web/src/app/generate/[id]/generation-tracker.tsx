@@ -233,15 +233,19 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
                     {character.seo_slug ? 'You\'ll be redirected shortly...' : 'The image is still being generated in the background.'}
                   </p>
                 </div>
-                <a
-                  href={`/character/${character.seo_slug || character.id}`}
+                <button
+                  onClick={() => {
+                    // Force navigation by using window.location for reliability
+                    const slug = character.seo_slug || characterId;
+                    window.location.href = `/character/${slug}`;
+                  }}
                   className="bg-orange-600 hover:bg-orange-700 text-white font-medium py-3 px-6 rounded-lg transition-colors inline-flex items-center gap-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
                   View Character Page
-                </a>
+                </button>
                 <p className="text-xs text-gray-500">
                   Your roast is ready! The image will appear when it's done generating.
                 </p>
@@ -276,7 +280,10 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
                   <p className="text-red-600 text-sm mt-4">{retryError}</p>
                 )}
                 <p className="text-gray-500 text-xs mt-4">
-                  Or <a href={`/character/${character.seo_slug || characterId}`} className="text-purple-600 hover:underline">view your character</a> with the roast text
+                  Or <button 
+                    onClick={() => window.location.href = `/character/${character.seo_slug || characterId}`}
+                    className="text-purple-600 hover:underline"
+                  >view your character</button> with the roast text
                 </p>
               </div>
             ) : (
