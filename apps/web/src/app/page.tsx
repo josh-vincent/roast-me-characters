@@ -24,7 +24,7 @@ export default async function HomePage() {
           <h1 className="mx-auto max-w-4xl font-display text-3xl sm:text-5xl lg:text-7xl font-medium tracking-tight text-slate-900">
             Transform your photos into
             <span className="text-orange-600 block sm:inline">
-              <span className="relative"> hilarious 🔥 roast figurines</span>
+              <span className="relative"> hilarious 🔥 Roast figurines</span>
             </span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-base sm:text-lg tracking-tight text-slate-700">

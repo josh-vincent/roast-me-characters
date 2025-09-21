@@ -495,7 +495,7 @@ export async function generateCharacterImage(
     IMPORTANT - REPRESENT THE ACTUAL PERSON:
     - This figurine must look like the SPECIFIC PERSON from the input image
     - Maintain their overall appearance, clothing style, hair, skin tone, and basic facial structure
-    - Ensure the figurine clearly represents a ${analysis.gender} person of ${analysis.age_range} age
+    - Ensure the figurine clearly represents a ${analysis.gender} person of ${analysis.age_range} age and keep the ethnicity, race, and gender of the person accurate
     - Only exaggerate the features that were detected in the AI analysis
     - DO NOT add features they don't have (no glasses if they don't wear glasses, etc.)
     - Keep their general proportions but make the detected features comically larger
@@ -727,9 +727,9 @@ function createEnhancedRetryPrompt(
     - DO NOT add features they don't have (no glasses if they don't wear them, etc.)
     
     ROASTING CARICATURE STYLE:
-    - This is a COMEDIC ROAST figurine of THIS SPECIFIC PERSON designed to make people laugh
+    - This is a ROAST figurine of THIS SPECIFIC PERSON designed to make people laugh
     - MASSIVELY exaggerate only their existing distinctive features for maximum humor
-    - Think political cartoon or SNL caricature style in 3D form representing THIS PERSON
+    - Think political cartoon or SNL caricature style in 3D form representing THIS PERSON 
     - If THEY have big ears, make THEIR ears COMICALLY HUGE
     - If THEY have glasses, make THEIR glasses THICK and OVERSIZED
     - If THEY have a large nose, make THEIR nose DRAMATICALLY oversized
@@ -746,6 +746,7 @@ function createEnhancedRetryPrompt(
     FIGURINE QUALITY:
     - ${analysis.character_style} CARICATURE style collectible figure of THIS SPECIFIC ${analysis.gender} PERSON
     - HEAVILY exaggerated features creating hilarious character that looks like them
+    - Must represent the ethnicity, race, and gender of the person accurately.
     - Premium PVC/ABS materials with detailed paint work
     - Museum-quality craftsmanship with cartoon proportions but recognizable as this ${analysis.age_range} ${analysis.gender} person
     - ${analysis.dominant_color} color scheme with realistic materials matching their appearance
