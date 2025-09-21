@@ -80,6 +80,11 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
       return;
     }
     
+    // Don't poll if failed - user needs to click retry
+    if (status === 'failed' || status === 'retry_failed') {
+      return;
+    }
+    
     // Check if we've exceeded 30 seconds
     const checkTimeout = () => {
       const elapsed = Date.now() - generationStartTime;
@@ -136,6 +141,7 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
   const handleRetry = async () => {
     setIsRetrying(true);
     setRetryError(null);
+    setHasTimedOut(false); // Reset timeout when retrying
     
     try {
       const result = await retryCharacterGeneration(characterId);
@@ -143,14 +149,16 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
       if (!result.success) {
         setRetryError(result.error || 'Failed to retry generation');
       } else {
-        // Update local state to show retrying
+        // Update local state to show we're generating again
         setCharacter(prev => ({
           ...prev,
           generation_params: {
             ...prev.generation_params,
-            status: 'retrying'
+            status: 'generating'
           }
         }));
+        setGenerationStep('creating'); // Reset to creating step
+        // The polling will resume automatically due to status change
       }
     } catch (err) {
       setRetryError('Failed to retry generation');
@@ -219,22 +227,42 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
                 <p className="text-sm mb-2">Generation is taking longer than usual.</p>
                 <p className="text-xs text-gray-500">You'll be redirected shortly...</p>
               </div>
-            ) : !isFailed ? (
-              <div className="flex justify-center">
-                <div className="w-16 h-16 border-4 border-purple-200 rounded-full animate-spin border-t-purple-600"></div>
-              </div>
-            ) : (
+            ) : isFailed ? (
               <div className="space-y-4">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                  <p className="text-red-800 text-sm">
+                    {character.generation_params?.error || 'Image generation failed. This can happen due to high demand or temporary issues.'}
+                  </p>
+                </div>
                 <button
                   onClick={handleRetry}
                   disabled={isRetrying}
-                  className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-8 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
                 >
-                  {isRetrying ? 'Retrying...' : 'Try Again'}
+                  {isRetrying ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white rounded-full animate-spin border-t-transparent"></div>
+                      Retrying...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      Try Again
+                    </>
+                  )}
                 </button>
                 {retryError && (
                   <p className="text-red-600 text-sm mt-4">{retryError}</p>
                 )}
+                <p className="text-gray-500 text-xs mt-4">
+                  Or <a href={`/character/${character.seo_slug || characterId}`} className="text-purple-600 hover:underline">view your character</a> with the roast text
+                </p>
+              </div>
+            ) : (
+              <div className="flex justify-center">
+                <div className="w-16 h-16 border-4 border-purple-200 rounded-full animate-spin border-t-purple-600"></div>
               </div>
             )}
           </div>
