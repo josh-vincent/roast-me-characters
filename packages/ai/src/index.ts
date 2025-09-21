@@ -577,21 +577,39 @@ export async function generateCharacterImage(
         console.log('Prompt:', prompt);
       }
       
-      // Use Gemini 2.5 Flash Image API directly for image generation
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': process.env.GOOGLE_GENERATIVE_AI_API_KEY || '',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: prompt
+      // Create an AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      
+      let response;
+      try {
+        // Use Gemini 2.5 Flash Image API directly for image generation
+        response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': process.env.GOOGLE_GENERATIVE_AI_API_KEY || '',
+          },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: prompt
+              }]
             }]
-          }]
-        })
-      });
+          }),
+          signal: controller.signal
+        });
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        if (fetchError.name === 'AbortError') {
+          console.error(`Gemini API timeout (attempt ${attempt}): Request took longer than 30 seconds`);
+          throw new Error('Gemini API timeout: Request took longer than 30 seconds');
+        }
+        console.error(`Gemini API fetch error (attempt ${attempt}):`, fetchError.message);
+        throw fetchError;
+      }
+      
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -835,18 +853,36 @@ async function generateCharacterImageWithCustomPrompt(prompt: string): Promise<s
     try {
       console.log(`Generating with custom prompt (attempt ${attempt}/${maxRetries})...`);
       
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': process.env.GOOGLE_GENERATIVE_AI_API_KEY || '',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{ text: prompt }]
-          }]
-        })
-      });
+      // Create an AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      
+      let response;
+      try {
+        response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': process.env.GOOGLE_GENERATIVE_AI_API_KEY || '',
+          },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{ text: prompt }]
+            }]
+          }),
+          signal: controller.signal
+        });
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        if (fetchError.name === 'AbortError') {
+          console.error(`Gemini API timeout (attempt ${attempt}): Request took longer than 30 seconds`);
+          throw new Error('Gemini API timeout: Request took longer than 30 seconds');
+        }
+        console.error(`Gemini API fetch error (attempt ${attempt}):`, fetchError.message);
+        throw fetchError;
+      }
+      
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorText = await response.text();
