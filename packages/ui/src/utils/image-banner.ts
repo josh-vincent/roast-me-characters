@@ -109,6 +109,11 @@ export async function shareImageWithBanner(
   bannerText: string = 'roastme.tocld.com'
 ): Promise<void> {
   try {
+    // Check if we're in a browser environment
+    if (typeof window === 'undefined') {
+      console.warn('shareImageWithBanner called in non-browser environment');
+      return;
+    }
     if (navigator.share && navigator.canShare) {
       // For platforms that support native sharing with images
       const imageWithBanner = await addBannerToImage(imageUrl, bannerText);
@@ -129,7 +134,7 @@ export async function shareImageWithBanner(
     }
     
     // Fallback: copy URL to clipboard and show message
-    const url = window.location.href;
+    const url = typeof window !== 'undefined' ? window.location.href : '';
     if (navigator.clipboard) {
       await navigator.clipboard.writeText(url);
       alert('Link copied to clipboard! Share this URL to show your roast character.');
@@ -161,6 +166,12 @@ export async function shareCharacterUrl(
   showSuccessMessage: boolean = true
 ): Promise<void> {
   try {
+    // Check if we're in a browser environment
+    if (typeof window === 'undefined') {
+      console.warn('shareCharacterUrl called in non-browser environment');
+      return;
+    }
+    
     // If it's already a full URL (contains http/https), use it directly
     // Otherwise, construct the character URL from slug
     let url: string;

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { createCheckoutSession } from '@/lib/polar';
+import { createCheckoutSession } from '@/lib/payment-provider';
 import type { Database } from '@/lib/supabase/types';
 
 export async function POST(request: NextRequest) {
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create checkout session with Polar
+    // Create checkout session with payment provider (Stripe or Polar)
     const checkoutSession = await createCheckoutSession(productId, userId, userEmail);
     
     return NextResponse.json({ 

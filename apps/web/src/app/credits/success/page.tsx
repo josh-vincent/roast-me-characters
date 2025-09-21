@@ -17,11 +17,16 @@ function CreditsSuccessContent() {
   useEffect(() => {
     const processPayment = async () => {
       try {
+        // Check for either Polar customer_session_token or Stripe session_id
         const customerSessionToken = searchParams.get('customer_session_token');
+        const stripeSessionId = searchParams.get('session_id');
         
-        if (customerSessionToken) {
+        if (customerSessionToken || stripeSessionId) {
           // Process the payment confirmation
-          console.log('Processing payment with token:', customerSessionToken);
+          console.log('Processing payment:', { 
+            polar: customerSessionToken, 
+            stripe: stripeSessionId 
+          });
           
           // Wait a moment for the webhook to process
           await new Promise(resolve => setTimeout(resolve, 2000));

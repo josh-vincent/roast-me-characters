@@ -18,6 +18,7 @@ export default function CreditsPage() {
   const [packages, setPackages] = useState<CreditPackage[]>([]);
   const [packagesLoading, setPackagesLoading] = useState(true);
   const [currentCredits, setCurrentCredits] = useState<number>(0);
+  const [paymentProvider, setPaymentProvider] = useState<string>('');
 
   useEffect(() => {
     // Fetch available packages
@@ -26,6 +27,7 @@ export default function CreditsPage() {
         const response = await fetch('/api/credits/packages');
         const data = await response.json();
         setPackages(data.packages || []);
+        setPaymentProvider(data.provider || 'stripe');
       } catch (error) {
         console.error('Error fetching packages:', error);
       } finally {
@@ -199,7 +201,7 @@ export default function CreditsPage() {
             <div>
               <h3 className="font-semibold text-gray-900 mb-2">Is my payment information secure?</h3>
               <p className="text-gray-600">
-                Yes! We use industry-standard encryption and never store your payment details. All transactions are processed securely through Stripe.
+                Yes! We use industry-standard encryption and never store your payment details. All transactions are processed securely through {paymentProvider === 'stripe' ? 'Stripe' : 'our payment processor'}.
               </p>
             </div>
           </div>

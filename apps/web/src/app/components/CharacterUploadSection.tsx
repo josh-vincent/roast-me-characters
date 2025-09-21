@@ -19,7 +19,7 @@ export function CharacterUploadSection() {
   const [error, setError] = useState<string | null>(null);
   const [showSignupPrompt, setShowSignupPrompt] = useState(false);
   
-  const handleUpload = async (source: File | string) => {
+  const handleUpload = async (source: File) => {
     // Check credits before starting for authenticated users
     if (user) {
       const credits = await getCredits();
@@ -36,15 +36,8 @@ export function CharacterUploadSection() {
     try {
       const formData = new FormData();
       
-      if (source instanceof File) {
-        formData.append('image', source);
-      } else {
-        // For URL, we need to fetch and convert to File
-        const response = await fetch(source);
-        const blob = await response.blob();
-        const file = new File([blob], 'image.jpg', { type: blob.type });
-        formData.append('image', file);
-      }
+      // Add the file to form data
+      formData.append('image', source);
       
       // Add anonymous session ID if user is not authenticated
       if (!user) {
@@ -56,13 +49,13 @@ export function CharacterUploadSection() {
       
       const result = await generateCharacter(formData);
       
-      if (!result.success) {
-        setError(result.error || 'Character generation failed');
-        if (result.requiresAuth) {
+      if (!result || !result.success) {
+        setError(result?.error || 'Character generation failed');
+        if (result?.requiresAuth) {
           setShowSignupPrompt(true);
         }
         setCurrentStep('upload');
-      } else if (result.characterId) {
+      } else if (result?.characterId) {
         // Show signup prompt for anonymous users
         if (!user) {
           setShowSignupPrompt(true);
