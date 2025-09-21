@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Mobile optimizations and progressive loading */
+@import '../styles/mobile-optimizations.css';
+
 @keyframes fade-in {
   from {
     opacity: 0;

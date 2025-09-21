@@ -1,0 +1,111 @@
+/* Mobile Touch Target Optimizations */
+
+/* Ensure all buttons have minimum 44px height on mobile */
+@media (max-width: 640px) {
+  /* Primary buttons */
+  button,
+  .btn,
+  a[role="button"],
+  [type="button"],
+  [type="submit"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Icon buttons need explicit sizing */
+  .icon-button {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Input fields */
+  input,
+  textarea,
+  select {
+    min-height: 44px;
+    padding: 12px;
+  }
+
+  /* Clickable cards and links */
+  .clickable-card,
+  .gallery-card {
+    min-height: 44px;
+  }
+
+  /* Navigation items */
+  nav a,
+  .nav-item {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Toast action buttons */
+  [data-sonner-toast] button {
+    min-height: 36px;
+    padding: 8px 12px;
+  }
+
+  /* Upload area */
+  .upload-dropzone {
+    min-height: 120px;
+    padding: 20px;
+  }
+
+  /* Character card actions */
+  .character-actions button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* Improved spacing for mobile */
+@media (max-width: 640px) {
+  /* Add spacing between interactive elements */
+  .action-buttons {
+    gap: 12px;
+  }
+
+  /* Improve tap targets for close buttons */
+  .close-button,
+  [aria-label*="close" i],
+  [aria-label*="dismiss" i] {
+    padding: 10px;
+    margin: -10px;
+  }
+}
+
+/* Progressive image loading styles */
+.image-loading {
+  filter: blur(5px);
+  transition: filter 0.3s ease-in-out;
+}
+
+.image-loaded {
+  filter: blur(0);
+}
+
+/* Skeleton loading animations */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 0%,
+    #f8f8f8 20%,
+    #f0f0f0 40%,
+    #f0f0f0 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}

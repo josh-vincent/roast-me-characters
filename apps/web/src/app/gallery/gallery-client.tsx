@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { CharacterCard } from '../components/CharacterCard';
 import { createClient } from '@/lib/supabase/client';
+import { SkeletonCard } from '@/components/SkeletonCard';
 
 interface Character {
   id: string;
@@ -209,6 +210,14 @@ export function GalleryClient({ initialCharacters, isUserGallery, userId }: Gall
                 showPrivacyBadge={isUserGallery}
               />
             ))}
+            {/* Show skeleton loaders when loading more */}
+            {loading && (
+              <>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <SkeletonCard key={`skeleton-${i}`} />
+                ))}
+              </>
+            )}
           </div>
 
           {/* Load more button */}

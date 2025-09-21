@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { LoadingSpinner } from '@roast-me/ui';
 import { retryCharacterGeneration } from '../../actions/character-actions';
+import { GenerationProgress } from '@/components/GenerationProgress';
 
 interface Character {
   id: string;
@@ -224,6 +225,16 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
               </div>
             )}
 
+            {/* Progress bar */}
+            {!isFailed && !hasTimedOut && (
+              <div className="mb-8">
+                <GenerationProgress 
+                  status={generationStep} 
+                  hasTimedOut={hasTimedOut}
+                />
+              </div>
+            )}
+
             {/* Progress Indicator or Action */}
             {hasTimedOut ? (
               <div className="space-y-4">
@@ -286,11 +297,7 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
                   >view your character</button> with the roast text
                 </p>
               </div>
-            ) : (
-              <div className="flex justify-center">
-                <div className="w-16 h-16 border-4 border-purple-200 rounded-full animate-spin border-t-purple-600"></div>
-              </div>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
