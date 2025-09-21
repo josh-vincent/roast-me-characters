@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 
 export default function TestStripePage() {
   const [provider, setProvider] = useState('');
@@ -37,12 +38,13 @@ export default function TestStripePage() {
       
       if (data.checkoutUrl) {
         console.log('Checkout URL:', data.checkoutUrl);
+        toast.success('Redirecting to checkout...');
         window.location.href = data.checkoutUrl;
       } else {
-        alert('Failed to create checkout session');
+        toast.error('Failed to create checkout session');
       }
     } catch (err) {
-      alert('Error: ' + err);
+      toast.error('Error: ' + err);
     }
   };
 

@@ -7,6 +7,7 @@ import { generateCharacter } from '../actions/character-actions';
 import { useAuth } from '@/contexts/AuthContext';
 import { SignupPrompt } from '@/components/SignupPrompt';
 import { useAnonymousSession } from '@/hooks/useAnonymousSession';
+import { toast } from 'sonner';
 
 type WorkflowStep = 'upload' | 'generate';
 
@@ -24,7 +25,13 @@ export function CharacterUploadSection() {
     if (user) {
       const credits = await getCredits();
       if (credits <= 0) {
-        setError('No credits remaining. Purchase more credits to continue.');
+        toast.error('No credits remaining', {
+          description: 'Purchase more credits to continue creating characters',
+          action: {
+            label: 'Get Credits',
+            onClick: () => router.push('/credits')
+          }
+        });
         return;
       }
     }
@@ -32,6 +39,9 @@ export function CharacterUploadSection() {
     setCurrentStep('generate');
     setIsProcessing(true);
     setError(null);
+    toast.info('🎨 Starting character generation...', {
+      description: 'This usually takes 30-60 seconds'
+    });
     
     try {
       const formData = new FormData();
@@ -50,7 +60,15 @@ export function CharacterUploadSection() {
       const result = await generateCharacter(formData);
       
       if (!result || !result.success) {
-        setError(result?.error || 'Character generation failed');
+        const errorMessage = result?.error || 'Character generation failed';
+        toast.error('Generation failed', {
+          description: errorMessage,
+          action: result?.requiresAuth ? {
+            label: 'Sign in',
+            onClick: () => signInWithGoogle()
+          } : undefined
+        });
+        
         if (result?.requiresAuth) {
           setShowSignupPrompt(true);
         }
@@ -61,15 +79,28 @@ export function CharacterUploadSection() {
           setShowSignupPrompt(true);
         }
         
+        toast.success('Character created!', {
+          description: 'Redirecting to your character page...'
+        });
+        
         // Redirect to generation tracking page
         router.push(`/generate/${result.characterId}`);
         return;
       } else {
-        setError('Character generation failed');
+        toast.error('Unexpected error', {
+          description: 'Character generation failed. Please try again.'
+        });
         setCurrentStep('upload');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to generate character');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to generate character';
+      toast.error('Error', {
+        description: errorMessage,
+        action: {
+          label: 'Try again',
+          onClick: () => handleUpload(source)
+        }
+      });
       setCurrentStep('upload');
     } finally {
       setIsProcessing(false);

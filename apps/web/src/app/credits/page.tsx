@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '../components/Header';
+import { toast } from 'sonner';
 
 interface CreditPackage {
   id: string;
@@ -52,12 +53,13 @@ export default function CreditsPage() {
 
   const handlePurchase = async (productId: string) => {
     if (!user) {
-      const shouldSignIn = confirm(
-        'To purchase credits, you need to sign in with Google first. Would you like to sign in now?'
-      );
-      if (shouldSignIn) {
-        await signInWithGoogle('credits');
-      }
+      toast('Sign in required', {
+        description: 'Please sign in with Google to purchase credits',
+        action: {
+          label: 'Sign in',
+          onClick: () => signInWithGoogle('credits')
+        },
+      });
       return;
     }
 
@@ -75,13 +77,20 @@ export default function CreditsPage() {
       const data = await response.json();
       
       if (data.checkoutUrl) {
+        toast.success('Redirecting to checkout...');
         window.location.href = data.checkoutUrl;
       } else {
         throw new Error('Failed to create checkout session');
       }
     } catch (error) {
       console.error('Error purchasing credits:', error);
-      alert('Failed to start purchase. Please try again.');
+      toast.error('Purchase failed', {
+        description: 'Unable to start purchase. Please try again.',
+        action: {
+          label: 'Retry',
+          onClick: () => handlePurchase(productId)
+        }
+      });
     } finally {
       setLoading(null);
     }

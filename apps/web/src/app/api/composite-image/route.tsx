@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
           )}
           
           {/* Original Image Overlay - Bottom Right (1/4 size) */}
-          {originalImage && (
+          {originalImage ? (
             <div
               style={{
                 position: 'absolute',
@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
                 }}
               />
             </div>
-          )}
+          ) : null}
           
           {/* Banner across top of image */}
           <div
@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
           </div>
           
           {/* Bottom Info Bar */}
-          {(title || figurineName) && (
+          {(title || figurineName) ? (
             <div
               style={{
                 position: 'absolute',
@@ -128,27 +128,29 @@ export async function GET(request: NextRequest) {
                 gap: '8px',
               }}
             >
-              {title && (
+              {title ? (
                 <div style={{ 
                   fontSize: '28px',
                   fontWeight: 'bold',
                   color: 'white',
                   textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+                  display: 'block',
                 }}>
                   {title}
                 </div>
-              )}
-              {figurineName && (
+              ) : null}
+              {figurineName ? (
                 <div style={{ 
                   fontSize: '18px',
                   color: 'rgba(255,165,0,0.9)',
                   fontStyle: 'italic',
+                  display: 'block',
                 }}>
                   "{figurineName}"
                 </div>
-              )}
+              ) : null}
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     ),
