@@ -156,14 +156,22 @@ export async function shareImageWithBanner(
 }
 
 export async function shareCharacterUrl(
-  characterSlug?: string,
+  urlOrSlug?: string,
   title: string = 'Check out my AI Roast Character!',
   showSuccessMessage: boolean = true
 ): Promise<void> {
   try {
-    // Construct the full character URL
-    const baseUrl = window.location.origin;
-    const url = characterSlug ? `${baseUrl}/character/${encodeURIComponent(characterSlug)}` : window.location.href;
+    // If it's already a full URL (contains http/https), use it directly
+    // Otherwise, construct the character URL from slug
+    let url: string;
+    if (!urlOrSlug) {
+      url = window.location.href;
+    } else if (urlOrSlug.startsWith('http://') || urlOrSlug.startsWith('https://')) {
+      url = urlOrSlug;
+    } else {
+      const baseUrl = window.location.origin;
+      url = `${baseUrl}/character/${encodeURIComponent(urlOrSlug)}`;
+    }
     
     if (navigator.share && navigator.canShare({ url })) {
       // Use native sharing if available
