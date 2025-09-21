@@ -22,7 +22,7 @@ async function getUserCharacters(userId: string) {
   return characters || [];
 }
 
-async function getPublicCharacters() {
+async function getPublicCharacters(limit: number = 50) {
   const supabase = await createClient();
   
   const { data: characters, error } = await supabase
@@ -31,7 +31,7 @@ async function getPublicCharacters() {
     .eq('is_public', true)
     .not('model_url', 'is', null)
     .order('created_at', { ascending: false })
-    .limit(24);
+    .limit(limit);
 
   if (error) {
     console.error('Error fetching public characters:', error);
@@ -45,17 +45,9 @@ export default async function GalleryPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  let characters = [];
-  let isUserGallery = false;
-
-  if (user) {
-    // Authenticated user - show their characters
-    characters = await getUserCharacters(user.id);
-    isUserGallery = true;
-  } else {
-    // Public view - show all public characters
-    characters = await getPublicCharacters();
-  }
+  // Always show all public characters from the community
+  const characters = await getPublicCharacters(100); // Show more characters
+  const isUserGallery = false; // Always show as community gallery
 
   // Transform characters to match expected format
   const transformedCharacters = characters.map(char => {

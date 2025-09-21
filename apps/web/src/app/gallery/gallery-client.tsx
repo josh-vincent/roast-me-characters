@@ -33,7 +33,7 @@ interface GalleryClientProps {
 export function GalleryClient({ initialCharacters, isUserGallery, userId }: GalleryClientProps) {
   const [characters, setCharacters] = useState<Character[]>(initialCharacters);
   const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(initialCharacters.length === 24);
+  const [hasMore, setHasMore] = useState(initialCharacters.length >= 100); // Check if we have max initial load
   const [filter, setFilter] = useState<'all' | 'public' | 'private'>('all');
 
   const supabase = createClient();
