@@ -86,14 +86,8 @@ export function ImageUploadWithUrl({
   const validateUrl = (url: string): boolean => {
     try {
       new URL(url);
-      const imageExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
-      const hasImageExtension = imageExtensions.some(ext => 
-        url.toLowerCase().includes(ext)
-      );
-      if (!hasImageExtension && !url.includes('unsplash') && !url.includes('pexels')) {
-        setError('URL should point to an image file');
-        return false;
-      }
+      // Accept any valid URL - we'll let the backend handle image validation
+      // Common image CDNs, services, and formats are all accepted
       return true;
     } catch {
       setError('Please enter a valid URL');
