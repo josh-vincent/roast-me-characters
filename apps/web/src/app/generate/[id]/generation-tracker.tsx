@@ -133,8 +133,8 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
       return;
     }
     
-    // Don't poll if failed - user needs to click retry
-    if (status === 'failed' || status === 'retry_failed') {
+    // Don't poll if failed or timed out - user needs to click retry
+    if (status === 'failed' || status === 'retry_failed' || status === 'timeout') {
       return;
     }
     
@@ -226,7 +226,7 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
   };
 
   const status = character.generation_params?.status;
-  const isFailed = status === 'failed' || status === 'retry_failed';
+  const isFailed = status === 'failed' || status === 'retry_failed' || status === 'timeout';
   const isGenerating = status === 'generating' || status === 'retrying';
   
   // Get current status message
@@ -264,6 +264,7 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
             {/* Current Step Description with rotating messages */}
             <p className="text-gray-600 mb-8 min-h-[24px] transition-all duration-500">
               {hasTimedOut ? 'Your character is still being created. Redirecting you to the character page...' :
+               status === 'timeout' ? 'The generation took too long. Please try again.' :
                isFailed ? 'The generation failed, but you can try again.' :
                STATUS_MESSAGES[generationStep]?.[statusMessageIndex] || 'Getting everything ready...'}
             </p>

@@ -143,6 +143,115 @@ export async function generateCharacter(formData: FormData): Promise<CharacterGe
   }
 }
 
+// Async generation function that runs in background
+async function generateCharacterImageBackground(
+  features: any[],
+  analysis: any,
+  roastContent: any,
+  characterId: string,
+  originalUrl: string
+) {
+  const supabase = createServiceClient()
+  
+  try {
+    // Add a timestamp to track generation start time
+    const startTime = Date.now()
+    
+    // Generate the character image
+    console.log('Async: Calling generateCharacterImage...')
+    const result = await generateCharacterImage(
+      features,
+      analysis,
+      [],
+      roastContent,
+      characterId
+    )
+    
+    const generatedUrl = result?.original || null
+    console.log('Async: Image generation result:', generatedUrl ? 'Success' : 'Failed')
+    
+    // Check if more than 60 seconds have passed (timeout)
+    const elapsedTime = Date.now() - startTime
+    if (elapsedTime > 60000) {
+      console.log('Async: Generation took too long, marking as timeout')
+      await (supabase
+        .from('roast_me_ai_characters') as any)
+        .update({
+          generation_params: {
+            ...analysis,
+            roast_content: roastContent,
+            original_image_url: originalUrl,
+            status: 'timeout',
+            error: 'Generation took longer than 60 seconds'
+          }
+        })
+        .eq('id', characterId)
+      return
+    }
+    
+    if (generatedUrl) {
+      // Create composite OG URL for sharing
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://roastme.tocld.com'
+      const ogImageUrl = new URL('/api/og', baseUrl)
+      ogImageUrl.searchParams.set('original', originalUrl)
+      ogImageUrl.searchParams.set('generated', generatedUrl)
+      
+      if (roastContent.title) {
+        ogImageUrl.searchParams.set('title', roastContent.title)
+      }
+      if (roastContent.punchline) {
+        ogImageUrl.searchParams.set('punchline', roastContent.punchline)
+      }
+      
+      const compositeOgUrl = ogImageUrl.toString()
+      
+      // Update the character with success
+      await (supabase
+        .from('roast_me_ai_characters') as any)
+        .update({
+          model_url: generatedUrl,
+          generation_params: {
+            ...analysis,
+            roast_content: roastContent,
+            original_image_url: originalUrl,
+            status: 'completed',
+            composite_og_url: compositeOgUrl
+          }
+        })
+        .eq('id', characterId)
+    } else {
+      // Mark as failed if no URL generated
+      await (supabase
+        .from('roast_me_ai_characters') as any)
+        .update({
+          generation_params: {
+            ...analysis,
+            roast_content: roastContent,
+            original_image_url: originalUrl,
+            status: 'failed',
+            error: 'Failed to generate image'
+          }
+        })
+        .eq('id', characterId)
+    }
+  } catch (error) {
+    console.error('Async generation error:', error)
+    // Update status to failed
+    await (supabase
+      .from('roast_me_ai_characters') as any)
+      .update({
+        generation_params: {
+          ...analysis,
+          roast_content: roastContent,
+          original_image_url: originalUrl,
+          status: 'failed',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        }
+      })
+      .eq('id', characterId)
+  }
+}
+
 /**
  * Retry character generation for a failed character
  */
@@ -314,51 +423,22 @@ async function generateCharacterImageAsync(
       throw updateError
     }
     
-    // Generate the character image
-    console.log('Calling generateCharacterImage...')
-    const result = await generateCharacterImage(
+    // Start async generation (fire and forget)
+    console.log('Starting async character image generation...')
+    
+    // Execute the background generation function without awaiting
+    generateCharacterImageBackground(
       analysis.features,
       analysis,
-      [],
       roastContent,
-      characterId
-    )
+      characterId,
+      originalUrl
+    ).catch(error => {
+      console.error('Async generation error:', error)
+    })
     
-    console.log('Image generation result:', result ? 'Success' : 'Failed')
-    
-    const generatedUrl = result?.original || null
-    
-    if (generatedUrl) {
-      // Create composite OG URL for sharing with before/after layout
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://roastme.tocld.com'
-      const ogImageUrl = new URL('/api/og', baseUrl)
-      ogImageUrl.searchParams.set('original', originalUrl)
-      ogImageUrl.searchParams.set('generated', generatedUrl)
-      // Add title and punchline for more engaging OG image
-      if (roastContent.title) {
-        ogImageUrl.searchParams.set('title', roastContent.title)
-      }
-      if (roastContent.punchline) {
-        ogImageUrl.searchParams.set('punchline', roastContent.punchline)
-      }
-      const compositeOgUrl = ogImageUrl.toString()
-      
-      // Update the character with the generated image AND composite OG URL
-      // IMPORTANT: Preserve the original_image_url when updating
-      await (supabase
-        .from('roast_me_ai_characters') as any)
-        .update({
-          model_url: generatedUrl,
-          generation_params: {
-            ...analysis,
-            roast_content: roastContent,
-            original_image_url: originalUrl, // Keep the original image URL
-            status: 'completed',
-            composite_og_url: compositeOgUrl
-          }
-        })
-        .eq('id', characterId)
-    }
+    // Return immediately - don't wait for generation
+    console.log('Returning early while generation continues in background...')
   } catch (error) {
     console.error('Background generation error:', error)
     // Update status to failed
@@ -377,3 +457,4 @@ async function generateCharacterImageAsync(
       .eq('id', characterId)
   }
 }
+
