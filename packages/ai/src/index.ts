@@ -486,7 +486,7 @@ async function retryWithStrategy<T>(
       if (attempt < maxRetries) {
         // Different delay strategies based on error type
         const delay = getRetryDelay(error, attempt);
-        console.log(`🔄 Retry attempt ${attempt}/${maxRetries} after ${delay}ms delay. Error: ${error.message}`);
+        console.log(`🔄 Retry attempt ${attempt}/${maxRetries} after ${delay}ms delay. Error: ${error instanceof Error ? error.message : String(error)}`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }

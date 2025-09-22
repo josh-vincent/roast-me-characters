@@ -138,7 +138,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return profile?.credits || 0
       }
 
-      return data?.total_available || 0
+      return (data as any)?.total_available || 0
     } catch (error) {
       console.error('Error in getCredits:', error)
       return 0
@@ -172,11 +172,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       return {
-        dailyAvailable: data.daily_available || 0,
-        dailyUsed: data.daily_used || 0,
-        purchasedCredits: data.purchased_credits || 0,
-        totalAvailable: data.total_available || 0,
-        nextResetTime: new Date(data.next_reset_time)
+        dailyAvailable: (data as any).daily_available || 0,
+        dailyUsed: (data as any).daily_used || 0,
+        purchasedCredits: (data as any).purchased_credits || 0,
+        totalAvailable: (data as any).total_available || 0,
+        nextResetTime: new Date((data as any).next_reset_time)
       }
     } catch (error) {
       console.error('Error in getCreditBalance:', error)
@@ -258,16 +258,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Check if the operation was successful
-      if (!data?.success) {
-        console.log('Credit usage failed:', data?.error_message || 'Insufficient credits')
+      if (!(data as any)?.success) {
+        console.log('Credit usage failed:', (data as any)?.error_message || 'Insufficient credits')
         return false
       }
 
       console.log('Credits used successfully:', {
-        dailyUsed: data.daily_used,
-        purchasedUsed: data.purchased_used,
-        dailyRemaining: data.daily_remaining,
-        purchasedRemaining: data.purchased_remaining
+        dailyUsed: (data as any).daily_used,
+        purchasedUsed: (data as any).purchased_used,
+        dailyRemaining: (data as any).daily_remaining,
+        purchasedRemaining: (data as any).purchased_remaining
       })
 
       return true
