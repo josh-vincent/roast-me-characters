@@ -627,9 +627,9 @@ export async function generateCharacterImage(
         console.log('Prompt:', prompt);
       }
       
-      // Create an AbortController for timeout
+      // Create an AbortController for timeout - use shorter timeout for Vercel
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 12000); // 12 second timeout (allows for retries within Vercel's limits)
       
       let response;
       try {
@@ -652,8 +652,8 @@ export async function generateCharacterImage(
       } catch (fetchError: any) {
         clearTimeout(timeoutId);
         if (fetchError.name === 'AbortError') {
-          console.error(`Gemini API timeout (attempt ${attempt}): Request took longer than 30 seconds`);
-          throw new Error('Gemini API timeout: Request took longer than 30 seconds');
+          console.error(`Gemini API timeout (attempt ${attempt}): Request took longer than 12 seconds`);
+          throw new Error('Gemini API timeout: Request took longer than 12 seconds');
         }
         console.error(`Gemini API fetch error (attempt ${attempt}):`, fetchError.message);
         throw fetchError;
@@ -903,9 +903,9 @@ async function generateCharacterImageWithCustomPrompt(prompt: string): Promise<s
     try {
       console.log(`Generating with custom prompt (attempt ${attempt}/${maxRetries})...`);
       
-      // Create an AbortController for timeout
+      // Create an AbortController for timeout - use shorter timeout for Vercel
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 12000); // 12 second timeout (allows for retries within Vercel's limits)
       
       let response;
       try {
@@ -925,8 +925,8 @@ async function generateCharacterImageWithCustomPrompt(prompt: string): Promise<s
       } catch (fetchError: any) {
         clearTimeout(timeoutId);
         if (fetchError.name === 'AbortError') {
-          console.error(`Gemini API timeout (attempt ${attempt}): Request took longer than 30 seconds`);
-          throw new Error('Gemini API timeout: Request took longer than 30 seconds');
+          console.error(`Gemini API timeout (attempt ${attempt}): Request took longer than 12 seconds`);
+          throw new Error('Gemini API timeout: Request took longer than 12 seconds');
         }
         console.error(`Gemini API fetch error (attempt ${attempt}):`, fetchError.message);
         throw fetchError;

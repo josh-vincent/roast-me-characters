@@ -1,7 +1,7 @@
 {
   "functions": {
     "apps/web/src/app/api/generate-roast/route.ts": {
-      "maxDuration": 30
+      "maxDuration": 60
     },
     "apps/web/src/app/generate/[id]/page.tsx": {
       "maxDuration": 10
