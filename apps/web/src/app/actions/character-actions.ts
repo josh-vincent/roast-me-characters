@@ -108,12 +108,19 @@ export async function generateCharacter(formData: FormData): Promise<CharacterGe
       return { success: false, error: 'Failed to save character' }
     }
 
-    // Generate character image in background
-    // Use Promise.resolve to ensure it runs even without await
-    Promise.resolve().then(() => 
-      generateCharacterImageAsync(characterId, originalUrl, analysisResult, roastContent)
-    ).catch(error => {
-      console.error('Background generation error for character:', characterId, error)
+    // Call Supabase Edge Function for image generation (runs for up to 150 seconds!)
+    const edgeFunctionUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/generate-character-image`
+    
+    // Fire and forget - edge function will handle everything
+    fetch(edgeFunctionUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ characterId })
+    }).catch(error => {
+      console.error('Failed to trigger edge function:', error)
       // Try to update status to failed so user knows
       return (createServiceClient()
         .from('roast_me_ai_characters') as any)
@@ -123,7 +130,7 @@ export async function generateCharacter(formData: FormData): Promise<CharacterGe
             roast_content: roastContent,
             original_image_url: originalUrl,
             status: 'failed',
-            error: error instanceof Error ? error.message : 'Unknown error'
+            error: 'Failed to start image generation'
           }
         })
         .eq('id', characterId)
