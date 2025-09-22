@@ -25,12 +25,70 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+// Helper functions for anonymous credit tracking
+const ANON_CREDITS_KEY = 'roastme_anon_credits'
+const ANON_RESET_KEY = 'roastme_anon_reset'
+
+function getAnonCreditsData() {
+  if (typeof window === 'undefined') return null
+  
+  const stored = localStorage.getItem(ANON_CREDITS_KEY)
+  const resetTime = localStorage.getItem(ANON_RESET_KEY)
+  const now = new Date()
+  
+  // Check if we need to reset (past midnight UTC)
+  if (resetTime) {
+    const storedReset = new Date(resetTime)
+    if (now > storedReset) {
+      // Reset for new day
+      const nextMidnight = new Date(now)
+      nextMidnight.setUTCHours(24, 0, 0, 0)
+      localStorage.setItem(ANON_CREDITS_KEY, '0')
+      localStorage.setItem(ANON_RESET_KEY, nextMidnight.toISOString())
+      return { used: 0, resetTime: nextMidnight }
+    }
+  } else {
+    // First time - set up reset time
+    const nextMidnight = new Date(now)
+    nextMidnight.setUTCHours(24, 0, 0, 0)
+    localStorage.setItem(ANON_RESET_KEY, nextMidnight.toISOString())
+  }
+  
+  const used = stored ? parseInt(stored, 10) : 0
+  return {
+    used,
+    resetTime: resetTime ? new Date(resetTime) : new Date(now.getTime() + 24 * 60 * 60 * 1000)
+  }
+}
+
+function useAnonCredits(amount: number): boolean {
+  if (typeof window === 'undefined') return false
+  
+  const data = getAnonCreditsData()
+  if (!data) return false
+  
+  const available = 3 - data.used
+  if (available < amount) return false
+  
+  localStorage.setItem(ANON_CREDITS_KEY, String(data.used + amount))
+  return true
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [anonCreditsUsed, setAnonCreditsUsed] = useState(0)
   const supabase = createClient()
 
   useEffect(() => {
+    // Initialize anonymous credits tracking
+    if (typeof window !== 'undefined') {
+      const data = getAnonCreditsData()
+      if (data) {
+        setAnonCreditsUsed(data.used)
+      }
+    }
+    
     // Get initial session
     const getInitialSession = async () => {
       try {
@@ -56,7 +114,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [supabase])
 
   const getCredits = async (): Promise<number> => {
-    if (!user) return 3 // Anonymous users get 3 daily credits
+    if (!user) {
+      // Anonymous users get 3 daily credits
+      const data = getAnonCreditsData()
+      return data ? Math.max(0, 3 - data.used) : 3
+    }
 
     try {
       // Use the new get_credit_balance function
@@ -86,12 +148,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const getCreditBalance = async (): Promise<CreditBalance | null> => {
     if (!user) {
       // Anonymous users get 3 daily credits
+      const data = getAnonCreditsData()
+      const used = data?.used || 0
+      const available = Math.max(0, 3 - used)
+      
       return {
-        dailyAvailable: 3,
-        dailyUsed: 0,
+        dailyAvailable: available,
+        dailyUsed: used,
         purchasedCredits: 0,
-        totalAvailable: 3,
-        nextResetTime: new Date(Date.now() + 24 * 60 * 60 * 1000)
+        totalAvailable: available,
+        nextResetTime: data?.resetTime || new Date(Date.now() + 24 * 60 * 60 * 1000)
       }
     }
 
@@ -119,7 +185,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const useCredits = async (amount: number, reason: string): Promise<boolean> => {
-    if (!user) return false
+    if (!user) {
+      // Handle anonymous user credits
+      const success = useAnonCredits(amount)
+      if (success) {
+        // Update state to trigger re-renders
+        const data = getAnonCreditsData()
+        setAnonCreditsUsed(data?.used || 0)
+      }
+      return success
+    }
 
     try {
       // Use the new use_credits database function

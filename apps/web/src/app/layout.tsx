@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ToasterProvider } from '@/components/ToasterProvider';
+import { StickyBanner } from '@/components/StickyBanner';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -72,10 +73,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AuthProvider>
-          {children}
-          <ToasterProvider />
-        </AuthProvider>
+        <StickyBanner />
+        <div className="pt-12"> {/* Add padding to account for sticky banner */}
+          <AuthProvider>
+            {children}
+            <ToasterProvider />
+          </AuthProvider>
+        </div>
       </body>
     </html>
   );
