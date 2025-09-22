@@ -138,17 +138,17 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
       return;
     }
     
-    // Check if we've exceeded 60 seconds
+    // Check if we've exceeded 30 seconds (reduced from 60)
     const checkTimeout = () => {
       const elapsed = Date.now() - generationStartTime;
-      // Increased timeout to 60 seconds for slower generation times
-      if (elapsed > 60000 && !hasTimedOut) {
+      // Reduced timeout to 30 seconds for better UX
+      if (elapsed > 30000 && !hasTimedOut) {
         setHasTimedOut(true);
-        // Auto-redirect even without seo_slug, using character ID
-        const slug = character.seo_slug || characterId;
-        setTimeout(() => {
-          window.location.href = `/character/${slug}`;
-        }, 3000); // Show timeout message for 3 seconds
+        // Don't auto-redirect, let user decide
+        // const slug = character.seo_slug || characterId;
+        // setTimeout(() => {
+        //   window.location.href = `/character/${slug}`;
+        // }, 3000);
       }
     };
     
@@ -202,10 +202,34 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
     setHasTimedOut(false); // Reset timeout when retrying
     
     try {
+      // First try the server action
       const result = await retryCharacterGeneration(characterId);
       
       if (!result.success) {
-        setRetryError(result.error || 'Failed to retry generation');
+        // If server action fails, try calling Edge Function directly
+        console.log('Server retry failed, trying Edge Function directly...');
+        
+        const response = await fetch('/api/retry-generation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ characterId })
+        });
+        
+        const data = await response.json();
+        if (!data.success) {
+          setRetryError(data.error || 'Failed to retry generation');
+        } else {
+          // Update local state to show we're generating again
+          setCharacter(prev => ({
+            ...prev,
+            generation_params: {
+              ...prev.generation_params,
+              status: 'generating'
+            }
+          }));
+          setGenerationStep('creating'); // Reset to creating step
+          // The polling will resume automatically due to status change
+        }
       } else {
         // Update local state to show we're generating again
         setCharacter(prev => ({
@@ -263,9 +287,9 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
             
             {/* Current Step Description with rotating messages */}
             <p className="text-gray-600 mb-8 min-h-[24px] transition-all duration-500">
-              {hasTimedOut ? 'Your character is still being created. Redirecting you to the character page...' :
+              {hasTimedOut ? 'Taking longer than expected. You can view your character now or wait a bit more.' :
                status === 'timeout' ? 'The generation took too long. Please try again.' :
-               isFailed ? 'The generation failed, but you can try again.' :
+               isFailed ? 'The generation failed, but you can retry with the button below.' :
                STATUS_MESSAGES[generationStep]?.[statusMessageIndex] || 'Getting everything ready...'}
             </p>
 
@@ -295,24 +319,47 @@ export default function GenerationTracker({ characterId, initialCharacter }: Gen
             {hasTimedOut ? (
               <div className="space-y-4">
                 <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                  <p className="text-orange-800 text-sm mb-2">Generation is taking longer than expected.</p>
+                  <p className="text-orange-800 text-sm mb-2">Generation is taking longer than usual (30+ seconds)</p>
                   <p className="text-xs text-gray-600">
-                    The image is still being generated in the background. You can view your character now!
+                    The image might still be processing. You can wait a bit more or view your character with just the roast text.
                   </p>
                 </div>
-                <button
-                  onClick={() => {
-                    // Force navigation by using window.location for reliability
-                    const slug = character.seo_slug || characterId;
-                    window.location.href = `/character/${slug}`;
-                  }}
-                  className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg inline-flex items-center gap-2"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                  View Your Character
-                </button>
+                <div className="flex gap-3 justify-center flex-wrap">
+                  <button
+                    onClick={handleRetry}
+                    disabled={isRetrying}
+                    className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+                  >
+                    {isRetrying ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white rounded-full animate-spin border-t-transparent"></div>
+                        Retrying...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Try Again
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => {
+                      const slug = character.seo_slug || characterId;
+                      window.location.href = `/character/${slug}`;
+                    }}
+                    className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg inline-flex items-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                    View Character Now
+                  </button>
+                </div>
+                {retryError && (
+                  <p className="text-red-600 text-sm">{retryError}</p>
+                )}
                 <p className="text-xs text-gray-500">
                   Your roast is ready! The image will appear when it's done generating.
                 </p>
