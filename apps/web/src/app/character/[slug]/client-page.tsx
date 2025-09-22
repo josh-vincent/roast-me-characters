@@ -185,7 +185,8 @@ export default function CharacterPageClient({ slug, initialCharacter, initialErr
                 <a href="/gallery" className="text-gray-600 hover:text-gray-900 text-sm font-medium">Gallery</a>
               </nav>
             </div>
-            <div className="flex items-center space-x-3">
+            {/* Desktop buttons - hide on mobile */}
+            <div className="hidden sm:flex items-center space-x-3">
               <button 
                 className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
                 onClick={() => shareCharacterUrl(
@@ -196,8 +197,17 @@ export default function CharacterPageClient({ slug, initialCharacter, initialErr
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
                 </svg>
-                Share
+                Share Roast
               </button>
+              <a 
+                href="/"
+                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Create New
+              </a>
               <button 
                 className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 transition-colors"
                 onClick={() => (character.model_url || character.medium_url) && downloadImageWithBanner(
@@ -210,12 +220,57 @@ export default function CharacterPageClient({ slug, initialCharacter, initialErr
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
-                Download
+                Download Image
               </button>
             </div>
           </div>
         </div>
       </header>
+
+      {/* Mobile button section - only visible on mobile */}
+      <div className="sm:hidden bg-white border-b border-gray-100 px-4 pb-3">
+        <div className="space-y-2">
+          {/* First row: Share and Download (2 buttons) */}
+          <div className="grid grid-cols-2 gap-2">
+            <button 
+              className="inline-flex items-center justify-center px-3 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              onClick={() => shareCharacterUrl(
+                character.seo_slug,
+                character.og_title || 'Check out my AI Roast Character!'
+              )}
+            >
+              <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+              </svg>
+              Share
+            </button>
+            <button 
+              className="inline-flex items-center justify-center px-3 py-2.5 text-sm font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 transition-colors"
+              onClick={() => (character.model_url || character.medium_url) && downloadImageWithBanner(
+                character.model_url || character.medium_url || '',
+                character.generation_params?.roast_content?.figurine_name 
+                  ? `${character.generation_params.roast_content.figurine_name.replace(/[^a-zA-Z0-9]/g, '-')}.png`
+                  : 'roast-character.png'
+              )}
+            >
+              <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Download
+            </button>
+          </div>
+          {/* Second row: Create New (full width) */}
+          <a 
+            href="/"
+            className="flex items-center justify-center px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-orange-500 hover:from-purple-700 hover:to-orange-600 rounded-md transition-all shadow-sm w-full"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Create New Roast
+          </a>
+        </div>
+      </div>
 
       {/* Main Content - Canva-style layout */}
       <div className="bg-gray-50 min-h-screen">
